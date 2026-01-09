@@ -1,0 +1,6 @@
+repositories:
+
+  fs_msgs:
+    type: git
+    url: https://github.com/amperaufsc/fs_msgs.git
+    version: ros2
