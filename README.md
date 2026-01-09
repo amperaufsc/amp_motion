@@ -1,4 +1,4 @@
-# Path PLanning and Vehicle Control
+# Path Planning and Vehicle Control
 This repository contains the modules responsible for path planning and vehicle control. These components receive perception and mapping information and generate motion commands that drive the vehicle along the intended trajectory.
 
 ## The planning subsystem handles:
