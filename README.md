@@ -11,4 +11,4 @@ Tracking the reference trajectory
 Computing steering, throttle, and braking commands
 Ensuring stable and consistent motion execution
 
-### Both subsystems interface through ROS 2 topics using consistent timestamping and coordinate frames, enabling integration with upstream modules such as mapping and perception, and downstream modules for actuation.
+Both subsystems interface through ROS 2 topics using consistent timestamping and coordinate frames, enabling integration with upstream modules such as mapping and perception, and downstream modules for actuation.
