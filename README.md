@@ -14,11 +14,25 @@ Ensuring stable and consistent motion execution
 Both subsystems interface through ROS 2 topics using consistent timestamping and coordinate frames, enabling integration with upstream modules such as mapping and perception, and downstream modules for actuation.
 
 
+## Commands for compiling packages 
+
+### For compiling both, use: 
+```bash
+    colcon build 
+   ```
+
+### For compiling individualy, use: 
+```bash
+    colcon build --packages-select ros2_path_planning
+   ```
+```bash
+    colcon build --packages-select ros2_control
+   ```
 
 
-Commands for launching the packages of this repository: 
+## Commands for launching the packages of this repository: 
 
-Path Planning launchs: 
+### Path Planning launchs: 
 
 ```bash
     ros2 run ros2_path_planning path_node.py
@@ -28,7 +42,7 @@ Path Planning launchs:
     ros2 launch ros2_path_planning path_planning.launch.py
    ```
 
-Control launchs: 
+### Control launchs: 
 
 ```bash
     ros2 run ros2_control control_node.py
