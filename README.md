@@ -21,7 +21,7 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
 
 # ROS Interfaces
 
-## Topics (Example)
+## Topics 
 
 | Module           | Direction | Topic                     | Message Type                 | Notes |
 |------------------|-----------|---------------------------|-------------------------------|-------|
