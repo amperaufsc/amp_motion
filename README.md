@@ -14,7 +14,11 @@ Ensuring stable and consistent motion execution
 Both subsystems interface through ROS 2 topics using consistent timestamping and coordinate frames, enabling integration with upstream modules such as mapping and perception, and downstream modules for actuation.
 
 
-Comando de run e launch dos pacotes
+
+
+Commands for launching the packages of this repository: 
+
+Path Planning launchs: 
 
 ```bash
     ros2 run ros2_path_planning path_node.py
@@ -23,6 +27,8 @@ Comando de run e launch dos pacotes
 ```bash
     ros2 launch ros2_path_planning path_planning.launch.py
    ```
+
+Control launchs: 
 
 ```bash
     ros2 run ros2_control control_node.py
