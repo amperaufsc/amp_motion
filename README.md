@@ -35,15 +35,6 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
 > Topics and messages used in Path Planning package.
 
 ---
-self.subscription = self.create_subscription(Path, 'path', self.path_callback, 10)
-        self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
-
-        self.publisher_ = self.create_publisher(ControlCommand, 'control', 10)
-        self.speed_publisher_ = self.create_publisher(Float32, '/speed', 10)
-        self.erro_ant_publisher_ = self.create_publisher(Float32, '/erro_ant', 10)
-        self.eh_publisher_ = self.create_publisher(Float32, '/eh', 10)
-        self.ey_publisher_ = self.create_publisher(Float32, '/ey', 10)
-        self.path_publisher_ = self.create_publisher(Path, 'reference_path', 10)
 
 | Module           | Direction | Topic                     | Message Type                 | Notes |
 |------------------|-----------|---------------------------|-------------------------------|-------|
