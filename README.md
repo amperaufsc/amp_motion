@@ -23,15 +23,37 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
 
 ## Topics (Example)
 
+self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
+        self.subscription = self.create_subscription(Track, 'track', self.track_callback, 10)
+        self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
+        self.publisher_ = self.create_publisher(Path, 'path', 10)
+        self.publisher_concatenated = self.create_publisher(Path, 'path_concatenated',10)
+        self.publisher_pointcloud = self.create_publisher(PointCloud2, 'track_pointcloud',10)
+        
+
 | Module           | Direction | Topic                     | Message Type                 | Notes |
 |------------------|-----------|---------------------------|-------------------------------|-------|
-| Path Planning     | Sub       | `/map/track`              | `sensor_msgs/PointCloud2`     | Track / cones / environment |
+| Path Planning     | Sub       | `/odom`                   | `sensor_msgs/Odom`     | Odometry input |
 | Path Planning     | Sub       | `/mission/go_signal`      | `std_msgs/Bool`               | Trigger for planning |
-| Path Planning     | Pub       | `/motion/ref_trajectory`  | `nav_msgs/Path` or custom     | Reference path |
-| Vehicle Control   | Sub       | `/motion/ref_trajectory`  | `nav_msgs/Path` or custom     | Input trajectory |
-| Vehicle Control   | Pub       | `/vehicle/cmd`            | `geometry_msgs/Twist`         | Command output |
+| Path Planning     | Sub       | `/track`      | `nav_msgs/Track`               | Track input |
+| Path Planning     | Pub       | `/path`  | `nav_msgs/Path`      | Reference path |
+| Path Planning     | Pub       | `/path_concatenated`  | `nav_msgs/Path`      | Reference path (Control input) |
+| Path Planning     | Pub       | `/track_pointcloud`  | `nav_msgs/PointCloud2`      | Track for debugging |
 
-> Topics and messages used in this repository. 
+> Topics and messages used in Path Planning package.
+
+---
+
+| Module           | Direction | Topic                     | Message Type                 | Notes |
+|------------------|-----------|---------------------------|-------------------------------|-------|
+| Path Planning     | Sub       | `/odom`                   | `sensor_msgs/Odom`     | Odometry input |
+| Path Planning     | Sub       | `/mission/go_signal`      | `std_msgs/Bool`               | Trigger for planning |
+| Path Planning     | Sub       | `/track`      | `nav_msgs/Track`               | Track input |
+| Path Planning     | Pub       | `/path`  | `nav_msgs/Path`      | Reference path |
+| Path Planning     | Pub       | `/path_concatenated`  | `nav_msgs/Path`      | Reference path (Control input) |
+| Path Planning     | Pub       | `/track_pointcloud`  | `nav_msgs/PointCloud2`      | Track for debugging |
+
+> Topics and messages used in Vehicle Control package.
 
 ---
 
