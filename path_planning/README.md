@@ -26,6 +26,5 @@ The resulting tree is explored using a variant of beam search, which efficiently
 ### Speed Profile
 The speed profile defines the vehicle's speed along the trajectory, balancing performance and safety. The forward pass calculates the path and speed from the start to the endpoint. The backward pass ensures that the vehicle will come to a complete stop at the final waypoint, adjusting the speed profile to account for smooth deceleration. Together, these steps guarantee that the vehicle follows an optimal trajectory and safely stops at the end of the path.
 
-## Usage
-pass
+
 

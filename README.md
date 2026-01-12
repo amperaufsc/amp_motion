@@ -23,35 +23,38 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
 
 ## Topics (Example)
 
-self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
-        self.subscription = self.create_subscription(Track, 'track', self.track_callback, 10)
-        self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
-        self.publisher_ = self.create_publisher(Path, 'path', 10)
-        self.publisher_concatenated = self.create_publisher(Path, 'path_concatenated',10)
-        self.publisher_pointcloud = self.create_publisher(PointCloud2, 'track_pointcloud',10)
-        
-
 | Module           | Direction | Topic                     | Message Type                 | Notes |
 |------------------|-----------|---------------------------|-------------------------------|-------|
 | Path Planning     | Sub       | `/odom`                   | `sensor_msgs/Odom`     | Odometry input |
 | Path Planning     | Sub       | `/mission/go_signal`      | `std_msgs/Bool`               | Trigger for planning |
 | Path Planning     | Sub       | `/track`      | `nav_msgs/Track`               | Track input |
-| Path Planning     | Pub       | `/path`  | `nav_msgs/Path`      | Reference path |
+| Path Planning     | Pub       | `/path`  | `fsds_msgs/Path`      | Reference path |
 | Path Planning     | Pub       | `/path_concatenated`  | `nav_msgs/Path`      | Reference path (Control input) |
 | Path Planning     | Pub       | `/track_pointcloud`  | `nav_msgs/PointCloud2`      | Track for debugging |
 
 > Topics and messages used in Path Planning package.
 
 ---
+self.subscription = self.create_subscription(Path, 'path', self.path_callback, 10)
+        self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
+
+        self.publisher_ = self.create_publisher(ControlCommand, 'control', 10)
+        self.speed_publisher_ = self.create_publisher(Float32, '/speed', 10)
+        self.erro_ant_publisher_ = self.create_publisher(Float32, '/erro_ant', 10)
+        self.eh_publisher_ = self.create_publisher(Float32, '/eh', 10)
+        self.ey_publisher_ = self.create_publisher(Float32, '/ey', 10)
+        self.path_publisher_ = self.create_publisher(Path, 'reference_path', 10)
 
 | Module           | Direction | Topic                     | Message Type                 | Notes |
 |------------------|-----------|---------------------------|-------------------------------|-------|
-| Path Planning     | Sub       | `/odom`                   | `sensor_msgs/Odom`     | Odometry input |
-| Path Planning     | Sub       | `/mission/go_signal`      | `std_msgs/Bool`               | Trigger for planning |
-| Path Planning     | Sub       | `/track`      | `nav_msgs/Track`               | Track input |
-| Path Planning     | Pub       | `/path`  | `nav_msgs/Path`      | Reference path |
-| Path Planning     | Pub       | `/path_concatenated`  | `nav_msgs/Path`      | Reference path (Control input) |
-| Path Planning     | Pub       | `/track_pointcloud`  | `nav_msgs/PointCloud2`      | Track for debugging |
+| Vehicle Control     | Sub       | `/path_concatenated`                   | `fsds_msgs/Path`     | Trajectoty input |
+| Vehicle Control     | Sub       | `/odom`      | `sensor_msgs/Odom`             | Odometry input |
+| Vehicle Control     | Pub       | `/control`      | `fsds_msgs/ControlCommand`               | Control output |
+| Vehicle Control     | Pub       | `/speed`  | `std_msgs/Float32`      | Reference speed command |
+| Vehicle Control     | Pub       | `/erro_ant`  | `std_msgs/Float32`      | Previous control error |
+| Vehicle Control     | Pub       | `/eh`  | `std_msgs/Float32`      | Heading error |
+| Vehicle Control     | Pub       | `/ey`  | `std_msgs/Float32`      | Lateral position error |
+| Vehicle Control     | Pub       | `/reference_path`  | `fsds_msgs/Path`      | Reference path for debugging |
 
 > Topics and messages used in Vehicle Control package.
 
