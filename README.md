@@ -11,8 +11,66 @@ Tracking the reference trajectory
 Computing steering, throttle, and braking commands
 Ensuring stable and consistent motion execution
 
+## System Data Flow (Conceptual)
+Perception → Mapping → Path Planning → Vehicle Control → Actuation
+
 Both subsystems interface through ROS 2 topics using consistent timestamping and coordinate frames, enabling integration with upstream modules such as mapping and perception, and downstream modules for actuation.
 
+
+---
+
+# ROS Interfaces
+
+## Topics (Example)
+
+| Module           | Direction | Topic                     | Message Type                 | Notes |
+|------------------|-----------|---------------------------|-------------------------------|-------|
+| Path Planning     | Sub       | `/map/track`              | `sensor_msgs/PointCloud2`     | Track / cones / environment |
+| Path Planning     | Sub       | `/mission/go_signal`      | `std_msgs/Bool`               | Trigger for planning |
+| Path Planning     | Pub       | `/motion/ref_trajectory`  | `nav_msgs/Path` or custom     | Reference path |
+| Vehicle Control   | Sub       | `/motion/ref_trajectory`  | `nav_msgs/Path` or custom     | Input trajectory |
+| Vehicle Control   | Pub       | `/vehicle/cmd`            | `geometry_msgs/Twist`         | Command output |
+
+> Note: message types may vary depending on final integration.
+
+---
+
+# Coordinate Frames
+
+Common frames in use:
+
+- `map` – global SLAM / mapping frame
+- `odom` – local odometry frame for short-term drift-free motion
+- `base_link` – vehicle base frame (control reference)
+
+Frame transforms are managed through TF2.
+
+---
+
+# Dependencies
+
+Core dependencies (minimum):
+
+- ROS 2 Humble (or newer)
+- `rclcpp` / `rclpy`
+- `nav_msgs`, `geometry_msgs`, `sensor_msgs`
+- `tf2` + `tf2_ros`
+- `colcon` (build system)
+- Custom interfaces (if used)
+
+---
+
+# Repository Structure (Example)
+
+├── ros2_path_planning/
+│ ├── src/
+│ ├── launch/
+│ └── package.xml
+├── ros2_control/
+│ ├── src/
+│ ├── launch/
+│ └── package.xml
+└── README.md
 
 ## Commands for compiling packages 
 
@@ -30,7 +88,7 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
    ```
 
 
-## Commands for launching the packages of this repository: 
+## Running & Launching
 
 ### Path Planning launchs: 
 
