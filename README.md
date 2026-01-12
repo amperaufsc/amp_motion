@@ -31,7 +31,7 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
 | Vehicle Control   | Sub       | `/motion/ref_trajectory`  | `nav_msgs/Path` or custom     | Input trajectory |
 | Vehicle Control   | Pub       | `/vehicle/cmd`            | `geometry_msgs/Twist`         | Command output |
 
-> Note: message types may vary depending on final integration.
+> Topics and messages used in this repository. 
 
 ---
 
@@ -40,7 +40,7 @@ Both subsystems interface through ROS 2 topics using consistent timestamping and
 Common frames in use:
 
 - `map` – global SLAM / mapping frame
-- `odom` – local odometry frame for short-term drift-free motion
+- `/fsds/map` – fsds frame 
 - `base_link` – vehicle base frame (control reference)
 
 Frame transforms are managed through TF2.
@@ -53,24 +53,12 @@ Core dependencies (minimum):
 
 - ROS 2 Humble (or newer)
 - `rclcpp` / `rclpy`
-- `nav_msgs`, `geometry_msgs`, `sensor_msgs`
+- `nav_msgs`, `geometry_msgs`, `sensor_msgs`, `lifecycle_msgs`
 - `tf2` + `tf2_ros`
 - `colcon` (build system)
-- Custom interfaces (if used)
 
 ---
 
-# Repository Structure (Example)
-
-├── ros2_path_planning/
-│ ├── src/
-│ ├── launch/
-│ └── package.xml
-├── ros2_control/
-│ ├── src/
-│ ├── launch/
-│ └── package.xml
-└── README.md
 
 ## Commands for compiling packages 
 
