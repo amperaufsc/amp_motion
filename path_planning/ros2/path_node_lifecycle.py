@@ -5,13 +5,12 @@ from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, String
 from fs_msgs.msg import GoSignal
 import numpy as np
-from std_msgs.msg import Header, String
 from scipy.interpolate import interp1d
 from rclpy.duration import Duration
-from fs_msgs.msg import Track, Motion
+from fs_msgs.msg import Track
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2, PointField
 from bayesian_inference.bayesian_inference_planner import Bayesian_Inference_Planner
@@ -21,114 +20,85 @@ import sensor_msgs_py.point_cloud2 as pc2
 from std_msgs.msg import Header
 from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackReturn
 from lifecycle_msgs.msg import Transition, TransitionEvent, State
-from lifecycle_msgs.srv import GetState, ChangeState
 import sys
-from bayesian_inference.speed_profile import SpeedProfile
 
 
 class PathNode(LifecycleNode):
 
 
     def __init__(self):
-        super().__init__('path_node')        
-        
-        self.track_received = False
-        self.odom_received = False
-        self.obstacle_numpy_array = []
-        self.car_position_x = []
-        self.car_position_y = []
-        self.yaw = []
-        self.car_pose = Vehicle_Pose(self.car_position_x, self.car_position_y, self.yaw)
-        self.go_msg = GoSignal()
-        self.time_stamp = self.get_clock().now().to_msg()
-        self.index = 0
-        self.position = np.array([0, 0])
+        super().__init__('path_node')
 
-    def on_shutdown(self, state: LifecycleState):
-        self.get_logger().info("SHUTDOWN PathNode")
-        return TransitionCallbackReturn.SUCCESS
-    
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Configuring PathNode...')
-
         try:
-        # Declaração dos parâmetros
+            self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
+            self.subscription = self.create_subscription(Track, 'track_pub', self.track_callback, 10)
+            self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
+            self.publisher_ = self.create_publisher(Path, 'path', 10)
+            self.publisher_pointcloud = self.create_publisher(PointCloud2, 'track_pointcloud',10)
+            
+            self.led_pub = self.create_publisher(String, '/AMP/as_status_indicator', 10)
+            self.led_msg = String()
+            self.transition_pub_emergency = self.create_publisher(TransitionEvent, "EbsNOTMissionFinished", 10)
+            self.transition_pub_driving = self.create_publisher(TransitionEvent, '/R2D', 10)
+            
             self.declare_parameter('max_angle_change_gain', 5.0)
             self.declare_parameter('std_dvt_track_width_gain', 0.0)
             self.declare_parameter('std_dvt_left_right_cones', 0.0)
             self.declare_parameter('max_wrong_color_gain', 20.0)
             self.declare_parameter('sqd_diff_path_len_sensor_range', 0.0)
-            self.declare_parameter('T', 0.01)
-            self.declare_parameter('max_acceleration', 0.5)
-            self.declare_parameter('braking_acceleration', 0.5)
-            self.declare_parameter('lateral_acceleration', 0.5)
-            self.declare_parameter('max_speed', 4.0)
             self.declare_parameter('frame_id', 'frame_id')
+            self.declare_parameter('T', 0.01)
+            self.T = float(self.get_parameter('T').value)
 
-        # Recuperação dos parâmetros
             max_angle_change_gain = float(self.get_parameter('max_angle_change_gain').value)
             std_dvt_track_width_gain = float(self.get_parameter('std_dvt_track_width_gain').value)
             std_dvt_left_right_cones = float(self.get_parameter('std_dvt_left_right_cones').value)
             max_wrong_color_gain = float(self.get_parameter('max_wrong_color_gain').value)
             sqd_diff_path_len_sensor_range = float(self.get_parameter('sqd_diff_path_len_sensor_range').value)
-            T = float(self.get_parameter('T').value)
-            max_acceleration = float(self.get_parameter('max_acceleration').value)
-            braking_acceleration = float(self.get_parameter('braking_acceleration').value)
-            lateral_acceleration = float(self.get_parameter('lateral_acceleration').value)
-            max_speed = float(self.get_parameter('max_speed').value)
             frame_id = self.get_parameter('frame_id').value
-
+            
+            
             self.get_logger().info('max_angle_change_gain:"%f"' %max_angle_change_gain)
             self.get_logger().info('std_dvt_track_width_gain:"%f"' %std_dvt_track_width_gain)
             self.get_logger().info('std_dvt_left_right_cones:"%f"' %std_dvt_left_right_cones)
 
-            # Inicialização do planner e speed profile
-            gains = Bayesian_Inference_Gains(
-                max_angle_change_gain, std_dvt_track_width_gain, 
-                std_dvt_left_right_cones, max_wrong_color_gain, 
-                sqd_diff_path_len_sensor_range)
-
+            gains = Bayesian_Inference_Gains(max_angle_change_gain, std_dvt_track_width_gain, std_dvt_left_right_cones, max_wrong_color_gain, sqd_diff_path_len_sensor_range)
             self.planner = Bayesian_Inference_Planner(gains)
-            self.speed_profile = SpeedProfile(max_acceleration, braking_acceleration, lateral_acceleration, max_speed)
-            self.timer_period = T
-            self.frame_id = frame_id
-            
-            # Publishers do nó
-            #self.publisher_path = self.create_lifecycle_publisher(Motion, 'path', 10)
-            self.transition_pub_driving = self.create_publisher(TransitionEvent, '/R2D', 10)
-            self.transition_pub_emergency = self.create_lifecycle_publisher(TransitionEvent, 'EbsNOTMissionFinished', 10)
-            # Criando os publishers
-            #self.publisher_path = self.create_lifecycle_publisher(Motion, 'path', 10)
-            self.publisher_pointcloud = self.create_publisher(PointCloud2, 'track_pointcloud',10)
-            self.publisher_ = self.create_publisher(Path, 'path', 10)
-            # Criando subscribers
-            self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
-            self.subscription = self.create_subscription(Track, 'track', self.track_callback, 10)
-            self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
 
-            # Publisher resposnavel pela ativação dos leds do carro baseado em seu estado
-            self.led_pub = self.create_publisher(String, '/AMP/as_status_indicator', 10)
-            self.led_msg = String()
+            self.track_received = False
+            self.odom_received = False
+            self.obstacle_numpy_array = []
+            self.car_position_x = []
+            self.car_position_y = []
+            self.yaw = []
+            self.car_pose = Vehicle_Pose(self.car_position_x, self.car_position_y, self.yaw)
+            self.go_msg = GoSignal()
+            self.time_stamp = self.get_clock().now().to_msg()
+            self.index = 0
+            self.position = np.array([0, 0])
 
-            self.get_logger().info('Configuração PATH concluída com sucesso.')
+            self.get_logger().info("PathNode configurado com sucesso")
             return TransitionCallbackReturn.SUCCESS
-
         except Exception as e:
-                self.get_logger().error(f'Erro durante on_configure: {e}')
-                return TransitionCallbackReturn.FAILURE
-    
-    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Activating PathNode...')
-        T = float(self.get_parameter('T').value)
-        try:
-            # Criando o timer
-            self.timer = self.create_timer(T, self.timer_callback)
-            self.get_logger().info('PathNode ativado com sucesso.')
-            return TransitionCallbackReturn.SUCCESS
-
-        except Exception as e:
-            self.get_logger().error(f'Erro durante on_activate: {e}')
+            self.get_logger().info("Falha ao configurar o PathNode")
             return TransitionCallbackReturn.FAILURE
+
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        try:
+            self.timer = self.create_timer(self.T, self.timer_callback)
+
+            self.get_logger().info("PathNode ativado com sucesso")
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().info("Falha ao ativar PathNode")
+            return TransitionCallbackReturn.FAILURE
+    
+    def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info("SHUTDOWN PathNode")
+
+        return TransitionCallbackReturn.SUCCESS
+
     def track_callback(self, msg):
         self.get_logger().info('Track Received')
         obstacle_numpy_array = []
@@ -167,13 +137,12 @@ class PathNode(LifecycleNode):
     def go_callback(self, msg):
         event_driving = TransitionEvent()
         self.transition_pub_driving.publish(event_driving)
-        self.get_logger().info('ERROR 404: NO DRIVER')
         self.go_msg = msg
         
     def path_publishing(self, np_array_path):
         path_msg = Path()
         path_msg.header.stamp = self.time_stamp
-        path_msg.header.frame_id = "map"
+        path_msg.header.frame_id = "fsds/map"
         poses = []
         for i, point in enumerate(np_array_path):
             if i >= 1:
@@ -185,7 +154,7 @@ class PathNode(LifecycleNode):
                 new_time = original_time + dt_duration
                 pose.header.stamp = new_time.to_msg()
                 #pose.header.stamp = path_msg.header.stamp + dt_duration
-                pose.header.frame_id = "map"
+                pose.header.frame_id = "fsds/map"
                 pose.pose.position.x = point[0]
                 pose.pose.position.y = point[1]
                 poses.append(pose)
@@ -197,9 +166,9 @@ class PathNode(LifecycleNode):
     def timer_callback(self):
         try:
             if self.track_received:
-                pointcloud=self.track_to_pointcloud()
-                self.publisher_pointcloud.publish(pointcloud)
-                
+                    pointcloud=self.track_to_pointcloud()
+                    self.publisher_pointcloud.publish(pointcloud)
+                    
             if self.go_msg.mission == "trackdrive" and self.track_received:
                 self.get_logger().info('oi')
                 #waypoints = self.planner.get_waypoints(self.obstacle_numpy_array, self.car_pose)
@@ -260,15 +229,12 @@ class PathNode(LifecycleNode):
                 
                 np_array_path = self.planner.get_interpolated_path(self.obstacle_numpy_array, waypoints[-1])
                 self.path_publishing(np_array_path)'''
-        except:
-            event_emergency = TransitionEvent()
-            self.transition_pub_emergency.publish(event_emergency) # Muda o estado do carro pra Emergency
-            
-            self.led_msg.data = 'as_emergency' 
+        except Exception as e:
+            event = TransitionEvent()
+            self.transition_pub_emergency(event) # Muda o estado do carro pra Emergency
+            self.led_msg.data = 'as_emergency'
             self.led_pub.publish(self.led_msg) # Publica mensagem de Emergency pra ativação do LED
-            
-            sys.exit(1) # Mata o processo com chamada de sistema  
-
+            sys.exit(1) # Mata o processo com chamada de sistema
 
     def track_to_pointcloud(self):
         header = Header()

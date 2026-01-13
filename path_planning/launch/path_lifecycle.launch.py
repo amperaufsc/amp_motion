@@ -1,47 +1,104 @@
 from launch import LaunchDescription
-from launch.actions import TimerAction, LogInfo, EmitEvent
+from launch_ros.actions import Node
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+from launch.actions import DeclareLaunchArgument
+from launch.actions import ExecuteProcess
+from launch.actions import DeclareLaunchArgument as LaunchArg
+from launch.substitutions import LaunchConfiguration as LaunchConfig
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
+from launch.event_handlers import OnProcessExit
+from launch.actions import TimerAction, LogInfo, EmitEvent
+from launch.actions import ExecuteProcess, RegisterEventHandler
+from launch.substitutions import LaunchConfiguration
+
+class Respawn:
+    
+    def callback(self, event, context):
+        return [
+            LogInfo(msg='Enviando shutdown pro MAPPER.'),
+            EmitEvent(
+                event=ChangeState(
+                    lifecycle_node_matcher=lambda node: node == lifecycle_node,
+                    transition_id=Transition.TRANSITION_UNCONFIGURED_SHUTDOWN
+                )
+            )
+                
+        ]
 
 def generate_launch_description():
-    lifecycle_node = LifecycleNode(
-        package='path_planning',
-        executable='lifecycle_path_node',
-        name='lifecycle_path_node',
-        namespace='lifecycle_path_node',
-        output='screen',
-        parameters=[{
-            'max_angle_change_gain': 5.0,
-            'std_dvt_track_width_gain': 0.0,
-            'std_dvt_left_right_cones': 0.0,
-            'max_wrong_color_gain': 20.0,
-            'sqd_diff_path_len_sensor_range': 0.0,
-            'T': 0.01,
-            'max_acceleration': 0.5,
-            'braking_acceleration': 0.5,
-            'lateral_acceleration': 0.5,
-            'max_speed': 4.0,
-            'frame_id': 'frame_id',
-        }]
-    )
+        global lifecycle_node
+        lifecycle_node = LifecycleNode(
+            package='path_planning',
+            executable='path_node_lifecycle.py',
+            name='path_node',
+            namespace='',
+            respawn = True,
+            output='screen',
+            parameters = [{'max_angle_change_gain': LaunchConfig('max_angle_change_gain')},
+                    {'std_dvt_track_width_gain': LaunchConfig('std_dvt_track_width_gain')},
+                    {'std_dvt_left_right_cones': LaunchConfig('std_dvt_left_right_cones')},
+                    {'max_wrong_color_gain': LaunchConfig('max_wrong_color_gain')},
+                    {'sqd_diff_path_len_sensor_range': LaunchConfig('sqd_diff_path_len_sensor_range')},
+                    {'T': LaunchConfig('T')},
+                    {'frame_id': LaunchConfig('frame_id')}],
+            remappings=[
+                ('odom', LaunchConfiguration('odom')),
+                ('path', LaunchConfiguration('path')),
+                ('go', LaunchConfiguration('go')),
+                ('track_pub', LaunchConfiguration('track_pub')),
+            ]
+        )
 
-    configure_event = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=lambda node: node == lifecycle_node,
-            transition_id=Transition.TRANSITION_CONFIGURE
+        counter = Respawn()
+
+        configure_event = EmitEvent(
+            event=ChangeState(
+                lifecycle_node_matcher=lambda node: node == lifecycle_node,
+                transition_id=Transition.TRANSITION_CONFIGURE
+            )
+        )
+
+        activate_event = EmitEvent(
+            event=ChangeState(
+                lifecycle_node_matcher=lambda node: node == lifecycle_node,
+                transition_id=Transition.TRANSITION_ACTIVATE
+            )
+        )
+
+        on_exit_handler = RegisterEventHandler(
+        OnProcessExit(
+            target_action=lifecycle_node,
+            on_exit=counter.callback
         )
     )
+        return LaunchDescription([
+            LaunchArg('namespace', default_value=['path'], description='namespace'),
+            LaunchArg('path', default_value=['path'], description='path msg'),
+            LaunchArg('odom', default_value=['/odom'], description='odom msg'),
+            LaunchArg('track_pub', default_value=['track_pub'], description='track msg'),
+            LaunchArg('go', default_value=['go'], description='go msg'),
+            LaunchArg('max_angle_change_gain', default_value=['5.0'], description='max_angle_change_gain msg'),
+            LaunchArg('std_dvt_track_width_gain', default_value=['0.0'], description='std_dvt_track_width_gain msg'),
+            LaunchArg('std_dvt_left_right_cones', default_value=['0.0'], description='std_dvt_left_right_cones msg'),
+            LaunchArg('max_wrong_color_gain', default_value=['20.0'], description='max_wrong_color_gain msg'),
+            LaunchArg('sqd_diff_path_len_sensor_range', default_value=['0.0'], description='sqd_diff_path_len_sensor_range msg'),
+            LaunchArg('T', default_value=['3.0'], description='T msg'),
+            LaunchArg('max_acceleration', default_value=['0.5'], description='max_acceleration msg'),
+            LaunchArg('braking_acceleration', default_value=['0.5'], description='braking_acceleration msg'),
+            LaunchArg('lateral_acceleration', default_value=['0.5'], description='lateral_acceleration msg'),
+            LaunchArg('max_speed', default_value=['2.5'], description='max_speed msg'),
 
-    activate_event = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=lambda node: node == lifecycle_node,
-            transition_id=Transition.TRANSITION_ACTIVATE
-        )
-    )
-
-    return LaunchDescription([
-        lifecycle_node,
-        TimerAction(period=6.0, actions=[configure_event, LogInfo(msg='Configurando Path')]),
-        TimerAction(period=9.0, actions=[activate_event, LogInfo(msg='Ativando Path')])
+            LaunchArg('track_pointcloud', default_value=['track_pointcloud'], description='track msg pointcloud'),
+            LaunchArg('frame_id', default_value = ['fsds/map'], description = 'frame_id msg'),
+            
+            lifecycle_node,
+            TimerAction(period=6.0, actions=[configure_event, LogInfo(msg='Configurando Path')]),
+            TimerAction(period=8.0, actions=[activate_event, LogInfo(msg='Ativando Path')]),
+            on_exit_handler     
+        
     ])
