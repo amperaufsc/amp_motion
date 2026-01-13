@@ -1,5 +1,15 @@
 # Path Planning
 
+## Running & Launching
+
+```bash
+    ros2 run ros2_path_planning path_node.py
+   ```
+
+```bash
+    ros2 launch ros2_path_planning path_planning.launch.py
+   ```
+
 ## Overview 
 This package is responsible for generating a trajectory for the vehicle in accordance with Formula Student Germany (FSG) regulations. Its objective is to ensure a safe and efficient path that completes each mission in the shortest possible time. By integrating odometry and track data, the code calculates and provides optimal waypoints for the vehicle to navigate through the various dynamic events.
 
