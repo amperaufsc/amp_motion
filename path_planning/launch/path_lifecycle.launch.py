@@ -6,7 +6,7 @@ from lifecycle_msgs.msg import Transition
 
 def generate_launch_description():
     lifecycle_node = LifecycleNode(
-        package='ros2_path_planning',
+        package='path_planning',
         executable='lifecycle_path_node',
         name='lifecycle_path_node',
         namespace='lifecycle_path_node',

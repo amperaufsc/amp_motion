@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(ros2_path_planning)
+project(path_planning)
 
 # Default to C++14 if no standard is specified
 if(NOT CMAKE_CXX_STANDARD)

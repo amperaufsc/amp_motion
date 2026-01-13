@@ -32,7 +32,7 @@ class Respawn:
 def generate_launch_description():
         global lifecycle_node
         lifecycle_node = LifecycleNode(
-            package='ros2_path_planning',
+            package='path_planning',
             executable='lifecycle_path_node_v1.py',
             name='path_node',
             namespace='',
