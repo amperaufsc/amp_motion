@@ -14,7 +14,7 @@ def generate_launch_description():
     return LaunchDescription([
         LaunchArg('/control_command', default_value=['/control_command'], description='Path message topic'),
         Node(
-            package='ros2_control',
+            package='control',
             executable='check_node',
             name='check_node',
             remappings=[('/control_command', LaunchConfig('/control_command'))]

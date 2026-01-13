@@ -31,7 +31,7 @@ def generate_launch_description():
             LaunchArg('frame_id', default_value = ['fsds/map'], description = 'frame_id msg'),
             
             Node(
-                package='ros2_path_planning',
+                package='path_planning',
                 executable='path_node.py',
                 name='planning_node',
                 namespace=LaunchConfig('namespace'),

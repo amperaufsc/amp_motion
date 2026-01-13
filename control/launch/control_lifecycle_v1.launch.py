@@ -30,7 +30,7 @@ class Respawn:
 def generate_launch_description():
     global lifecycle_node
     lifecycle_node = LifecycleNode(
-        package='ros2_control',  
+        package='control',  
         executable='lifecycle_control_v1.py',  
         name='control_node',
         namespace='',

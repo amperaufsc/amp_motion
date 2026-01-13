@@ -6,7 +6,7 @@ from lifecycle_msgs.msg import Transition
 
 def generate_launch_description():
     lifecycle_node = LifecycleNode(
-        package='ros2_control',  
+        package='control',  
         executable='lifecycle_control_node.py',  
         name='control_node',
         namespace='',

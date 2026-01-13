@@ -18,7 +18,7 @@ def generate_launch_description():
         LaunchArg('control', default_value=['control'], description='Control message topic'),
         LaunchArg('T', default_value=['0.01'], description='Sampling period'),
         Node(
-            package='ros2_control',
+            package='control',
             executable='control_node.py',
             name='control_node',
             namespace= LaunchConfig('namespace'),
