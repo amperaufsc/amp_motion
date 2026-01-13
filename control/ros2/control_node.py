@@ -29,18 +29,17 @@ class ControlNode(Node):
         self.eh_publisher_ = self.create_publisher(Float32, '/eh', 10)
         self.ey_publisher_ = self.create_publisher(Float32, '/ey', 10)
         self.path_publisher_ = self.create_publisher(Path, 'reference_path', 10)
-        self.declare_parameter('T', 0.1)    #ELE TA PEGANDO ESSE AQUI - NÃO O DO LAUNCH
+        self.declare_parameter('Kp', 0.05)
+        self.declare_parameter('Ki', 0.01)
+        self.declare_parameter('Kd', 0.0) 
+        self.declare_parameter('T', 0.01) 
+        self.T = float(self.get_parameter('T').value) 
         self.index = 0
-        self.T = float(self.get_parameter('T').value)
         self.timer = self.create_timer(self.T, self.timer_callback)
 
         self.get_logger().info('Control started')
     
-        self.declare_parameter('Kp', 0.05)
-        self.declare_parameter('Ki', 0.01)
-        self.declare_parameter('Kd', 0.0)
-        #self.declare_parameter('T', 0.1)
-
+        self.T = float(self.get_parameter('T').value)
         Kp = float(self.get_parameter('Kp').value)
         Ki = float(self.get_parameter('Ki').value)
         Kd = float(self.get_parameter('Kd').value)
@@ -49,8 +48,9 @@ class ControlNode(Node):
         self.get_logger().info('Ki:"%f"' %Ki)
         self.get_logger().info('Kd:"%f"' %Kd)
 
-        vehicle_parameters = Vehicle_Parameters(1, np.radians(35), np.radians(-35))
-        kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(1.5, 1.2) #lateral - orientation   1.5/1.2
+        vehicle_parameters = Vehicle_Parameters(1, np.radians(35), np.radians(-35)) #axle_length - steering_up_limit - steering_down_limit
+
+        kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(4, 3) #lateral error gain - orientation error gain
         self.control = KLS_Lateral_Motion_Controller(vehicle_parameters, kls_lateral_motion_controller_gains)
         self.longitudinal_controller = Longitudinal_Controller(Kp, Ki, Kd, self.T, 1)
         #self.PID_Controller = PIDController(Kp, Ki, Kd, T)
@@ -119,9 +119,16 @@ class ControlNode(Node):
 
 
             if self.received_path:
-                distancias = np.linalg.norm(self.path[self.closest_index:(self.closest_index + 10)] - self.position, axis=1)
-                self.closest_index = self.closest_index + np.argmin(distancias)
+                #Procurar apenas em uma janela ao redor do último ponto conhecido.
+                window = 20 # 20 pontos atrás e 20 pontos a frente
+                start = max(0, self.closest_index - window) # onde a janela se inicia, não pode ser menor que 0
+                end   = min(len(self.path), self.closest_index + window) # onde a janela termina, não pode ser maior que o tamanho do path
+                segment = self.path[start:end] # pega apenas os pontos dentro dessa janela
+                distancias = np.linalg.norm(segment - self.position, axis=1) # calcula as distancias em relação ao carro
 
+                self.closest_index = start + np.argmin(distancias) # o indice mais próximo dentro da janela e transforma em indice global
+
+                
                 self.get_logger().info('index: "%f"' %self.closest_index)
                 self.reference_path = self.path[self.closest_index:]
                
@@ -132,7 +139,6 @@ class ControlNode(Node):
                 #self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
                 #self.get_logger().info('T:"%f"' %self.T)
 
-                self.path_publishing(self.reference_path)
                 steering_command = - self.control.update_steering_angle_control_signal(self.reference_path, self.vehicle_state)
                 throttle_command, brake_command = self.longitudinal_controller.update_torque_control_signal(self.path, self.vehicle_state)
 
@@ -146,6 +152,7 @@ class ControlNode(Node):
                 msg.throttle = throttle_command
                 msg.brake = brake_command 
 
+                self.path_publishing(self.reference_path)
                 self.publisher_.publish(msg)
                 self.speed_publisher_.publish(speed_msg)
                 self.erro_ant_publisher_.publish(erro_ant_msg)

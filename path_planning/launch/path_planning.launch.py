@@ -21,7 +21,7 @@ def generate_launch_description():
             LaunchArg('std_dvt_left_right_cones', default_value=['0.0'], description='std_dvt_left_right_cones msg'),
             LaunchArg('max_wrong_color_gain', default_value=['20.0'], description='max_wrong_color_gain msg'),
             LaunchArg('sqd_diff_path_len_sensor_range', default_value=['0.0'], description='sqd_diff_path_len_sensor_range msg'),
-            LaunchArg('T', default_value=['0.1'], description='T msg'),
+            LaunchArg('T', default_value=['0.01'], description='T msg'),
             LaunchArg('max_acceleration', default_value=['0.5'], description='max_acceleration msg'),
             LaunchArg('braking_acceleration', default_value=['0.5'], description='braking_acceleration msg'),
             LaunchArg('lateral_acceleration', default_value=['0.5'], description='lateral_acceleration msg'),
