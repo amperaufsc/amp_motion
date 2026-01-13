@@ -34,22 +34,13 @@ install(
        DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-       PROGRAMS
-       ros2/lifecycle_path_node.py
-       DESTINATION lib/${PROJECT_NAME}
-)
 
 install(
         DIRECTORY
         bayesian_inference
         DESTINATION lib/${PROJECT_NAME} 
 )
-install(
-        PROGRAMS 
-        ros2/lifecycle_path_node_v1.py
-        DESTINATION lib/${PROJECT_NAME}
-)
+
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
