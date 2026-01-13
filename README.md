@@ -85,10 +85,10 @@ Core dependencies (minimum):
 
 ### For compiling individualy, use: 
 ```bash
-    colcon build --packages-select ros2_path_planning
+    colcon build --packages-select path_planning
    ```
 ```bash
-    colcon build --packages-select ros2_control
+    colcon build --packages-select control
    ```
 
 
@@ -97,19 +97,19 @@ Core dependencies (minimum):
 ### Path Planning launchs: 
 
 ```bash
-    ros2 run ros2_path_planning path_node.py
+    ros2 run path_planning path_node.py
    ```
 
 ```bash
-    ros2 launch ros2_path_planning path_planning.launch.py
+    ros2 launch path_planning path_planning.launch.py
    ```
 
 ### Control launchs: 
 
 ```bash
-    ros2 run ros2_control control_node.py
+    ros2 run control control_node.py
    ```
 
 ```bash
-    ros2 launch ros2_control control.launch.py
+    ros2 launch control control.launch.py
    ```
