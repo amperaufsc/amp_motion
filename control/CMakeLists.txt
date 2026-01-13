@@ -34,11 +34,7 @@ install(
         ros2/control_node.py
         DESTINATION lib/${PROJECT_NAME}
 )
-install(
-        PROGRAMS 
-        ros2/lifecycle_control_node.py
-        DESTINATION lib/${PROJECT_NAME}
-)
+
 install(
         DIRECTORY
         include
@@ -56,11 +52,7 @@ install(
         longitudinal_control
         DESTINATION lib/${PROJECT_NAME} 
 )
-install(
-        PROGRAMS 
-        ros2/lifecycle_control_v1.py
-        DESTINATION lib/${PROJECT_NAME}
-)
+
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
