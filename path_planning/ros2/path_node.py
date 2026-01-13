@@ -10,7 +10,7 @@ from fs_msgs.msg import GoSignal
 import numpy as np
 from scipy.interpolate import interp1d
 from rclpy.duration import Duration
-from fs_msgs.msg import Track, TrackStamped, TrackStampedWithCovariance
+from fs_msgs.msg import Track
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2, PointField
 from bayesian_inference.bayesian_inference_planner import Bayesian_Inference_Planner
@@ -173,16 +173,16 @@ class PathNode(Node):
         if self.go_msg.mission == "trackdrive" and self.track_received:
             self.get_logger().info('oi')
 
-            # self.local_cones = []
-            # for cone in self.obstacle_numpy_array:
-            #     if np.linalg.norm(cone[:2] - self.position) <= 20:
-            #         self.local_cones.append(cone)    
+            self.local_cones = []
+            for cone in self.obstacle_numpy_array:
+                if np.linalg.norm(cone[:2] - self.position) <= 20:
+                    self.local_cones.append(cone)    
 
-            # self.obstacle_global_array = np.array(self.local_cones)
+            self.obstacle_global_array = np.array(self.local_cones)
             
-            #obstacle_global_array = np.array(self.obstacle_numpy_array)
+            obstacle_global_array = np.array(self.obstacle_numpy_array)
 
-            #self.get_logger().info('cones: "%s"' %self.obstacle_global_array[:2])
+            self.get_logger().info('cones: "%s"' %self.obstacle_global_array[:2])
             np_array_path,np_array_path_concatenated = self.planner.get_interpolated_path(self.obstacle_numpy_array, self.car_pose)
             
             self.path_publishing(np_array_path)

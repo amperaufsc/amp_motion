@@ -17,21 +17,14 @@ class KLS_Lateral_Motion_Controller:
     def get_cross_error(self, position, reference_trajectory, reference_point_orientation):
         Prf = reference_trajectory[0] - position
         Trf = reference_point_orientation
-        return np.cross(Prf,Trf)/np.linalg.norm(Trf)
-    
-    '''
-    def get_cross_error(self, position, reference_trajectory, reference_point_orientation):
-        Prf = reference_trajectory[0] - position
-        Trf = reference_point_orientation
         return (Prf[0]*Trf[1]-Prf[1]*Trf[0])/np.linalg.norm(Trf)
-    '''
-    def get_heading_error(self, vehicle_state, reference_point_orientation):
-        Trf = reference_point_orientation
-        v = np.array([vehicle_state.x_velocity , vehicle_state.y_velocity])
-        Trf_norm = np.linalg.norm(Trf)
-        v_norm = np.linalg.norm(v)
-        print(Trf_norm, v_norm)
-        return np.arcsin(round(np.cross(Trf,v)/(Trf_norm * v_norm),4))
+
+    def get_heading_error(self, vehicle_state, reference_trajectory, reference_point_orientation):
+        yaw = vehicle_state.yaw
+        py = reference_point_orientation[1]
+        px = reference_point_orientation[0]
+        reference_orientation = np.arctan2(py,px) 
+        return np.arctan2(np.sin(reference_orientation - yaw), np.cos(reference_orientation - yaw))   
     
     def get_krp(self, reference_trajectory, vehicle_state):
         points = reference_trajectory[:self.look_ahead_horizon]
@@ -45,12 +38,12 @@ class KLS_Lateral_Motion_Controller:
 
     def update_steering_angle_control_signal(self, reference_trajectory, measured_state):
         car_position = [measured_state.x_position, measured_state.y_position]
-        reference_point_orientation = reference_trajectory[1]-reference_trajectory[0]
+        reference_point_orientation = reference_trajectory[1]-reference_trajectory[0] #(x1,y1) - (x0,y0) = (xr,yr)
         reference_point_orientation = reference_point_orientation/np.linalg.norm(reference_point_orientation)
 
         krp = self.get_krp(np.array(reference_trajectory), measured_state)
         ey = self.get_cross_error(car_position, reference_trajectory, reference_point_orientation)
-        eh = self.get_heading_error(measured_state, reference_point_orientation)
+        eh = self.get_heading_error(measured_state, reference_trajectory, reference_point_orientation)
         Kh = self.controller_gains.orientation_error_gain
         Ky = self.controller_gains.lateral_position_error_gain
         L = self.car_axle_length
