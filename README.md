@@ -1,82 +1,74 @@
-# Path Planning and Vehicle Control
-This repository contains the modules responsible for path planning and vehicle control. These components receive perception and mapping information and generate motion commands that drive the vehicle along the intended trajectory.
-
-### The planning subsystem handles:
-Path generation based on the mapped environment
-Trajectory interpolation and smoothing
-Waypoint sequencing and motion constraints
-
-### The control subsystem is responsible for:
-Tracking the reference trajectory
-Computing steering, throttle, and braking commands
-Ensuring stable and consistent motion execution
-
-## System Data Flow (Conceptual)
-Perception → Mapping → Path Planning → Vehicle Control → Actuation
-
-Both subsystems interface through ROS 2 topics using consistent timestamping and coordinate frames, enabling integration with upstream modules such as mapping and perception, and downstream modules for actuation.
+# Lifecycle 
+The LifecycleNode organizes the code into primary states (Primary States) and transition phases (Transitional States). This allows the node to follow a standardized lifecycle protocol during its activation within the pipeline, including a proper shutdown procedure in case of runtime issues. 
 
 
----
+### Primary State:
 
-# ROS Interfaces
-
-## Topics 
-
-| Module           | Direction | Topic                     | Message Type                 | Notes |
-|------------------|-----------|---------------------------|-------------------------------|-------|
-| Path Planning     | Sub       | `/odom`                   | `sensor_msgs/Odom`     | Odometry input |
-| Path Planning     | Sub       | `/mission/go_signal`      | `std_msgs/Bool`               | Trigger for planning |
-| Path Planning     | Sub       | `/track`      | `nav_msgs/Track`               | Track input |
-| Path Planning     | Pub       | `/path`  | `fsds_msgs/Path`      | Reference path |
-| Path Planning     | Pub       | `/path_concatenated`  | `nav_msgs/Path`      | Reference path (Control input) |
-| Path Planning     | Pub       | `/track_pointcloud`  | `nav_msgs/PointCloud2`      | Track for debugging |
-
-> Topics and messages used in Path Planning package.
-
----
-
-| Module           | Direction | Topic                     | Message Type                 | Notes |
-|------------------|-----------|---------------------------|-------------------------------|-------|
-| Vehicle Control     | Sub       | `/path_concatenated`                   | `fsds_msgs/Path`     | Trajectoty input |
-| Vehicle Control     | Sub       | `/odom`      | `sensor_msgs/Odom`             | Odometry input |
-| Vehicle Control     | Pub       | `/control`      | `fsds_msgs/ControlCommand`               | Control output |
-| Vehicle Control     | Pub       | `/speed`  | `std_msgs/Float32`      | Reference speed command |
-| Vehicle Control     | Pub       | `/erro_ant`  | `std_msgs/Float32`      | Previous control error |
-| Vehicle Control     | Pub       | `/eh`  | `std_msgs/Float32`      | Heading error |
-| Vehicle Control     | Pub       | `/ey`  | `std_msgs/Float32`      | Lateral position error |
-| Vehicle Control     | Pub       | `/reference_path`  | `fsds_msgs/Path`      | Reference path for debugging |
-
-> Topics and messages used in Vehicle Control package.
-
----
-
-# Coordinate Frames
-
-Common frames in use:
-
-- `map` – global SLAM / mapping frame
-- `/fsds/map` – fsds frame 
-- `base_link` – vehicle base frame (control reference)
-
-Frame transforms are managed through TF2.
-
----
-
-# Dependencies
-
-Core dependencies (minimum):
-
-- ROS 2 Humble (or newer)
-- `rclcpp` / `rclpy`
-- `nav_msgs`, `geometry_msgs`, `sensor_msgs`, `lifecycle_msgs`
-- `tf2` + `tf2_ros`
-- `colcon` (build system)
-
----
+- unconfigured
+- inactive
+- active
+- shutdown
 
 
-## Commands for compiling packages 
+### Transitional State:
+
+- configuring
+- activating
+- deactivating
+- cleaningup
+- shuttingdown
+
+
+
+Below is a simple state diagram illustrating the Lifecycle states and their transitions:
+
+![simple lifecycle](lifecycle1.png)
+
+
+
+
+
+Now, a more detailed diagram:
+
+![detailed lifecycle](lifecycle2.png)
+
+
+
+
+# Changes in the node:
+
+Within the already existing callbacks, the changes are minimal. The main difference is that, inside the node—after the constructor—three additional functions are added:
+
+### on_configure:
+
+Within this callback, the node’s parameters and publishers are declared.
+
+
+### on_activate:
+
+Within this callback, the node’s subscribers are declared.
+
+
+### on_shutdown
+
+Within this callback, the node enters a frozen state, where it no longer executes any logic, requiring the node to be restarted in such cases.
+
+
+
+# Debug
+
+To check the current state of a running node:
+`ros2 lifecycle get /node_name`
+
+To set a new state for the node:
+
+`ros2 lifecycle set /node_name <state_number / state_name>`
+
+If it is not possible to transition to the desired state from the current state, a corresponding warning is returned.
+
+
+
+# Commands for compiling packages 
 
 ### For compiling both, use: 
 ```bash
@@ -85,10 +77,10 @@ Core dependencies (minimum):
 
 ### For compiling individualy, use: 
 ```bash
-    colcon build --packages-select ros2_path_planning
+    colcon build --packages-select path_planning
    ```
 ```bash
-    colcon build --packages-select ros2_control
+    colcon build --packages-select control
    ```
 
 
@@ -97,19 +89,19 @@ Core dependencies (minimum):
 ### Path Planning launchs: 
 
 ```bash
-    ros2 run ros2_path_planning path_node.py
+    ros2 run path_planning path_node_lifecycle.py
    ```
 
 ```bash
-    ros2 launch ros2_path_planning path_planning.launch.py
+    ros2 launch path_planning path_lifecycle.launch.py
    ```
 
 ### Control launchs: 
 
 ```bash
-    ros2 run ros2_control control_node.py
+    ros2 run control control_node_lifecycle.py
    ```
 
 ```bash
-    ros2 launch ros2_control control.launch.py
+    ros2 launch control control_lifecycle.launch.py
    ```
