@@ -274,104 +274,56 @@ class Bayesian_Inference_Planner:
         self.path = self.get_path_from_tree(tree, tree.leaves[0])
         
         return self.path
-
-    def get_waypoints(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
-        if not self.lap_completed:
-            mean_points = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
-            if self.completed_lap(mean_points):
-                self.lap_completed = True
-                self.waypoints = mean_points 
-            self.waypoints_array = np.array(self.waypoints)
-
-        return self.waypoints_array
-
-        # print(tree.leaves[0].max_angle_change)
-        return self.get_path_from_tree(tree,tree.leaves[0])
-
-    '''def get_waypoints(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
-        mean_points = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
-        self.waypoints.append(mean_points)
-        
-        return self.waypoints'''
-    
-    def generate_closed_path(self, obstacle_numpy_array, initial_pose: Vehicle_Pose, distance_threshold=0.5, max_iterations=100):
-        """
-        Gera um caminho fechado de waypoints que retorna próximo ao ponto inicial.
-        
-        Args:
-            obstacle_numpy_array: np.ndarray com os cones.
-            initial_pose: Posição inicial do veículo (referência para retorno).
-            distance_threshold: Distância para considerar que retornou ao ponto inicial.
-            max_iterations: Limite de iterações para evitar loop infinito.
-
-        Returns:
-            Lista de waypoints que formam o caminho fechado.
-        """
-        self.waypoints = []  # Limpa os waypoints antigos
-        current_pose = initial_pose
-
-        for _ in range(max_iterations):
-            new_points = self.get_waypoints(obstacle_numpy_array, current_pose)
-
-            # Atualiza pose atual com o último ponto gerado
-            if len(new_points) == 0 or len(new_points[-1]) == 0:
-                break
-            
-            last_waypoint = new_points[-1][-1]  # último ponto da última chamada
-            current_pose = Vehicle_Pose()
-            current_pose.x_position_track_reference_frame = last_waypoint[0]
-            current_pose.y_position_track_reference_frame = last_waypoint[1]
-            current_pose.yaw_position_track_reference_frame = 0.0  # ou calcula baseado em vetor tangente
-
-            # Verifica se retornou ao ponto inicial
-            dx = current_pose.x_position_track_reference_frame - initial_pose.x_position_track_reference_frame
-            dy = current_pose.y_position_track_reference_frame - initial_pose.y_position_track_reference_frame
-            distance_to_start = np.hypot(dx, dy)
-
-            if distance_to_start <= distance_threshold:
-                break
-
-        # Junta todos os waypoints em uma única lista
-        closed_path = [point for segment in self.waypoints for point in segment]
-        return closed_path
     
     def continuous_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
         Car_Position = np.array([Vehicle_Pose.x_position_track_reference_frame, Vehicle_Pose.y_position_track_reference_frame])
-        path = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
-        path = path[1:]
-        
-        #self.global_path = np.append(self.global_path, path, axis=0)
-        #self.global_path = np.concatenate((self.global_path, path), axis=0)
-        #_, idx = np.unique(self.global_path, axis=0, return_index=True)
-        #self.global_path_concatenated = self.global_path[np.sort(idx)]
+        new_path = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
+        new_path = new_path[1:] 
 
-        for index_path,point_path in enumerate(path):
-            for index_global,point_global in enumerate(self.global_path):
-                if np.array_equal(point_path, point_global):
-                    self.global_path = np.delete(self.global_path, index_global, axis=0)
-            self.global_path = np.append(self.global_path, [point_path], axis=0)
+        if len(self.global_path) < 2:
+            for point in new_path:
+                self.global_path = np.append(self.global_path, [point], axis=0)
+            return self.global_path
+
+        point_last = self.global_path[-1]      # Último ponto
+        point_second_last = self.global_path[-2]  # Penúltimo ponto
+        current_angle = np.arctan2(point_last[1] - point_second_last[1], point_last[0] - point_second_last[0])
+
+        for i, point in enumerate(new_path):
+            candidate_angle = np.arctan2(point[1] - point_last[1], point[0] - point_last[0])
+            angle_diff = abs(candidate_angle - current_angle)
+
+            if angle_diff > np.pi:
+                angle_diff = 2 * np.pi - angle_diff
+
+            if angle_diff < np.deg2rad(20):
+                self.global_path = np.append(self.global_path, [point], axis=0)
+            else:
+                break 
+
         return self.global_path
 
-
     def get_interpolated_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
-        path1 = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
-        path2 = self.continuous_path(obstacle_numpy_array, Vehicle_Pose)
-
-        if len(path1) > self.limit_size:
-            path1 = path1[(-self.limit_size):]
-
-        if len(path2) > self.limit_size:
-            path2 = path2[(-self.limit_size):]
+        #interpola os pontos do path normal e concatenado e retorna os dois
         
-        distance1 = np.cumsum( np.sqrt(np.sum( np.diff(path1, axis=0)**2, axis=1 )) )
-        distance1 = np.insert(distance1, 0, 0)/distance1[-1]
-        interpolator1 =  interp1d(distance1, path1, kind="slinear", axis=0)
+        normal_path = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
+        concatenated_path = self.continuous_path(obstacle_numpy_array, Vehicle_Pose)
 
-        distance2 = np.cumsum( np.sqrt(np.sum( np.diff(path2, axis=0)**2, axis=1 )) )
-        distance2 = np.insert(distance2, 0, 0)/distance2[-1]
-        interpolator2 =  interp1d(distance2, path2, kind="slinear", axis=0)
+        if len(normal_path) > self.limit_size:
+            normal_path = normal_path[(-self.limit_size):]
 
-        return interpolator1(np.linspace(0,1,100)), interpolator2(np.linspace(0,1,100))
+        if len(concatenated_path) > self.limit_size:
+            concatenated_path = concatenated_path[(-self.limit_size):]
+        
+        distance_normalpath = np.cumsum( np.sqrt(np.sum( np.diff(normal_path, axis=0)**2, axis=1 )) )
+        distance_normalpath = np.insert(distance_normalpath, 0, 0)/distance_normalpath[-1]
+        interpolator_normalpath =  interp1d(distance_normalpath, normal_path, kind="slinear", axis=0)
+
+        distance_concatpath = np.cumsum( np.sqrt(np.sum( np.diff(concatenated_path, axis=0)**2, axis=1 )) )
+        distance_concatpath = np.insert(distance_concatpath, 0, 0)/distance_concatpath[-1]
+        interpolator_concatpath =  interp1d(distance_concatpath, concatenated_path, kind="slinear", axis=0)
+
+        return interpolator_normalpath(np.linspace(0,1,100)), interpolator_concatpath(np.linspace(0,1,100))
     
 '''<3 Diva <3
     oiiii yasmin'''
