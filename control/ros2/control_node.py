@@ -15,10 +15,11 @@ from include.vehicle_parameters import Vehicle_Parameters
 from include.vehicle_state import Vehicle_State
 from longitudinal_control.longitudinal_controller import Longitudinal_Controller
 from longitudinal_control.PID_controller import PIDController
+import yaml
 
 class ControlNode(Node):
     def __init__(self):
-        super().__init__('control_publisher')
+        super().__init__('control_node')
 
         self.subscription = self.create_subscription(Path, 'path', self.path_callback, 10)
         self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
@@ -29,30 +30,33 @@ class ControlNode(Node):
         self.eh_publisher_ = self.create_publisher(Float32, '/eh', 10)
         self.ey_publisher_ = self.create_publisher(Float32, '/ey', 10)
         self.path_publisher_ = self.create_publisher(Path, 'reference_path', 10)
-        self.declare_parameter('Kp', 0.05)
-        self.declare_parameter('Ki', 0.01)
-        self.declare_parameter('Kd', 0.0) 
-        self.declare_parameter('T', 0.01) 
-        self.T = float(self.get_parameter('T').value) 
+
+        # difinição dos parametros que estão no arquivo yaml (control/config/control_parameters.yaml)
+        self.declare_parameter('Kp', 0.0)
+        self.declare_parameter('Ki', 0.0)
+        self.declare_parameter('Kd', 0.0)
+        self.declare_parameter('Key', 0.0)
+        self.declare_parameter('Keh', 0.0)
+        self.declare_parameter('speed', 0.0)
+        self.declare_parameter('sampling_period', 0.01)
+
+        self.Kp = self.get_parameter('Kp').value
+        self.Ki = self.get_parameter('Ki').value
+        self.Kd = self.get_parameter('Kd').value
+        self.Key = self.get_parameter('Key').value
+        self.Keh = self.get_parameter('Keh').value
+        self.speed = self.get_parameter('speed').value
+        self.T = self.get_parameter('sampling_period').value
+
+        self.timer = self.create_timer(float(self.T), self.timer_callback)
         self.index = 0
-        self.timer = self.create_timer(self.T, self.timer_callback)
-
         self.get_logger().info('Control started')
-    
-        self.T = float(self.get_parameter('T').value)
-        Kp = float(self.get_parameter('Kp').value)
-        Ki = float(self.get_parameter('Ki').value)
-        Kd = float(self.get_parameter('Kd').value)
         
-        self.get_logger().info('Kp:"%f"' %Kp)
-        self.get_logger().info('Ki:"%f"' %Ki)
-        self.get_logger().info('Kd:"%f"' %Kd)
-
         vehicle_parameters = Vehicle_Parameters(1, np.radians(35), np.radians(-35)) #axle_length - steering_up_limit - steering_down_limit
 
-        kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(4, 3) #lateral error gain - orientation error gain
+        kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(self.Key, self.Keh) #lateral error gain - orientation error gain
         self.control = KLS_Lateral_Motion_Controller(vehicle_parameters, kls_lateral_motion_controller_gains)
-        self.longitudinal_controller = Longitudinal_Controller(Kp, Ki, Kd, self.T, 1)
+        self.longitudinal_controller = Longitudinal_Controller(self.Kp, self.Ki, self.Kd, self.T, self.speed)
         #self.PID_Controller = PIDController(Kp, Ki, Kd, T)
         self.received_path= False
         self.received_odom = False
@@ -60,7 +64,6 @@ class ControlNode(Node):
         
         
     def path_callback(self, path_msg):
-        #self.get_logger().info('Path Received: ')
         self.path = []
         self.timestamp = []
         for poses in path_msg.poses:
@@ -75,15 +78,14 @@ class ControlNode(Node):
 
         self.received_path = True
         self.get_logger().info('Path')
-    
+
+
     def odom_callback(self, msg):
-        # self.get_logger().info('Odom Received: ')
         self.received_odom = True
         car_position_x = msg.pose.pose.position.x
         car_position_y = msg.pose.pose.position.y
         self.odom_timestamp = msg.header.stamp
         self.odom_time_stamp_float = self.odom_timestamp.sec + self.odom_timestamp.nanosec * 1e-9
-        #self.car_pose = Vehicle_Pose(car_position_x, car_position_y, yaw)
         
         self.position = np.array([car_position_x, car_position_y])
 
@@ -95,7 +97,7 @@ class ControlNode(Node):
         self.body_linear_velocity_y = msg.twist.twist.linear.y
         
         self.vehicle_state = Vehicle_State(self.position[0], self.position[1], yaw, self.body_linear_velocity_x, self.body_linear_velocity_y, 0)
-        
+    
 
     def timer_callback(self):
         if self.received_odom:                
@@ -117,32 +119,20 @@ class ControlNode(Node):
             ey_msg = Float32()
             ey_msg.data = ey
 
-
             if self.received_path:
-                #Procurar apenas em uma janela ao redor do último ponto conhecido.
-                window = 20 # 20 pontos atrás e 20 pontos a frente
-                start = max(0, self.closest_index - window) # onde a janela se inicia, não pode ser menor que 0
-                end   = min(len(self.path), self.closest_index + window) # onde a janela termina, não pode ser maior que o tamanho do path
+                #Procurar apenas em uma janela (20) ao redor do último ponto conhecido.
+                start = max(0, self.closest_index - 20) # onde a janela se inicia, não pode ser menor que 0
+                end   = min(len(self.path), self.closest_index + 20) # onde a janela termina, não pode ser maior que o tamanho do path
                 segment = self.path[start:end] # pega apenas os pontos dentro dessa janela
                 distancias = np.linalg.norm(segment - self.position, axis=1) # calcula as distancias em relação ao carro
 
                 self.closest_index = start + np.argmin(distancias) # o indice mais próximo dentro da janela e transforma em indice global
 
-                
-                self.get_logger().info('index: "%f"' %self.closest_index)
                 self.reference_path = self.path[self.closest_index:]
-               
-                #self.speed_reference = 3.0
-                #self.longitudinal_controller = Longitudinal_Controller(0.05, 0.01, 0.0, 0.1, self.speed_reference)
-
-                #self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
-                #self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
-                #self.get_logger().info('T:"%f"' %self.T)
 
                 steering_command = - self.control.update_steering_angle_control_signal(self.reference_path, self.vehicle_state)
                 throttle_command, brake_command = self.longitudinal_controller.update_torque_control_signal(self.path, self.vehicle_state)
 
-                #self.get_logger().debug('Steering: "%f"' %steering_command)
                 self.get_logger().debug('Throttle: "%f"' %throttle_command)
                 self.get_logger().debug('Steering: "%f"' %steering_command)
                 self.get_logger().debug('Throttle: "%f"' %throttle_command)
@@ -171,19 +161,17 @@ class ControlNode(Node):
         poses = []
         for i, point in enumerate(np_array_path):
             pose = PoseStamped()
-            #pose.header.stamp = path_msg.header.stamp + dt_duration
             pose.header.frame_id = "fsds/map"
             pose.pose.position.x = point[0]
             pose.pose.position.y = point[1]
             poses.append(pose)
             
-        #self.get_logger().info('Publishing')
         path_msg.poses = poses
         self.path_publisher_.publish(path_msg)
 
 
 def main(args=None):
-    rclpy.init()
+    rclpy.init(args=args)
     control_publisher = ControlNode()
     rclpy.spin(control_publisher)
     control_publisher.destroy_node()
