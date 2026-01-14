@@ -1,0 +1,18 @@
+AMP:                          # nome do namespace  
+  control_node:               # nomde do nó (supersuper().__init__) e o que ta no launch file
+    ros__parameters:
+
+      # PID gains - longitudital control
+      Kp : 0.05               # ganho proporcional
+      Ki: 0.01                # ganho integrativo
+      Kd: 0.0                 # ganho derivativo
+
+      # KLS gains - lateral control
+      Key: 3.0                  # ganho do erro de posição
+      Keh: 4.0                  # ganho do erro de esterçamento
+
+      # Vehicle parameters
+      speed: 1.0                # velocidade do veículo
+
+      # Code parameters
+      sampling_period: 0.01  # período de amostragem
