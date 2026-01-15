@@ -36,6 +36,12 @@ install(
 )
 
 install(
+        PROGRAMS 
+        ros2/low_level_control_node.py
+        DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
         DIRECTORY
         include
         DESTINATION lib/${PROJECT_NAME} 
@@ -50,6 +56,12 @@ install(
 install(
         DIRECTORY
         longitudinal_control
+        DESTINATION lib/${PROJECT_NAME} 
+)
+
+install(
+        DIRECTORY
+        signals
         DESTINATION lib/${PROJECT_NAME} 
 )
 

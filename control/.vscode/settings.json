@@ -1,0 +1,25 @@
+{
+    "ROS2.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/ampera/ws/install/yolov8_msgs/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/slam_toolbox/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/ouster_sensor_msgs/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/can_bus/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/fs_msgs/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/depthai_ros_driver/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/depthai_ros_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/ampera/ws/install/yolov8_msgs/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/slam_toolbox/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/ouster_sensor_msgs/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/can_bus/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/fs_msgs/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/depthai_ros_driver/local/lib/python3.10/dist-packages",
+        "/home/ampera/ws/install/depthai_ros_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
