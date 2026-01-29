@@ -4,13 +4,16 @@ class SignalsController:
         GPIO.setmode(GPIO.BOARD)
         self.pwm = GPIO.PWM(18, 100)
         self.pwm.start(50)
-        GPIO.setup(13, GPIO.OUT)
+        self.left = 13
+        self.right = 15
+        GPIO.setup(self.left, GPIO.OUT)
+        GPIO.setup(self.right, GPIO.OUT)
 
-    def change_duty(self, control):
-        if control == 0:
-            self.pwm.ChangeDutyCycle(50)
-        elif control > 0:
-            self.pwm.ChangeDutyCycle(100)
-        elif control < 0:
-            self.pwm.ChangeDutyCycle(0)
-
+    def steer(self, control):
+        if control >= 0:
+            GPIO.output(self.left, False)
+            GPIO.output(self.right, True)
+        elif control <= 0:
+            GPIO.output(self.left, True)
+            GPIO.output(self.right, False)
+        self.pwm.ChangeDutyCycle(abs(control))
