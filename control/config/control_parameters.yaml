@@ -12,7 +12,7 @@ AMP:                          # nome do namespace
       Keh: 4.0                  # ganho do erro de esterçamento
 
       # Vehicle parameters
-      speed: 1.0                # velocidade do veículo
+      speed: 10.0                # velocidade do veículo
 
       # Code parameters
       sampling_period: 0.01  # período de amostragem

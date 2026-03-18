@@ -274,6 +274,16 @@ class Bayesian_Inference_Planner:
         self.path = self.get_path_from_tree(tree, tree.leaves[0])
         
         return self.path
+
+    def get_waypoints(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
+        if not self.lap_completed:
+            mean_points = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
+            if self.completed_lap(mean_points):
+                self.lap_completed = True
+                self.waypoints = mean_points 
+            self.waypoints_array = np.array(self.waypoints)
+
+        return self.waypoints_array
     
     def continuous_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
         Car_Position = np.array([Vehicle_Pose.x_position_track_reference_frame, Vehicle_Pose.y_position_track_reference_frame])
@@ -302,6 +312,47 @@ class Bayesian_Inference_Planner:
                 break 
 
         return self.global_path
+
+    def generate_closed_path(self, obstacle_numpy_array, initial_pose: Vehicle_Pose, distance_threshold=0.5, max_iterations=100):
+        """
+        Gera um caminho fechado de waypoints que retorna próximo ao ponto inicial.
+        
+        Args:
+            obstacle_numpy_array: np.ndarray com os cones.
+            initial_pose: Posição inicial do veículo (referência para retorno).
+            distance_threshold: Distância para considerar que retornou ao ponto inicial.
+            max_iterations: Limite de iterações para evitar loop infinito.
+
+        Returns:
+            Lista de waypoints que formam o caminho fechado.
+        """
+        self.waypoints = []  # Limpa os waypoints antigos
+        current_pose = initial_pose
+
+        for _ in range(max_iterations):
+            new_points = self.get_waypoints(obstacle_numpy_array, current_pose)
+
+            # Atualiza pose atual com o último ponto gerado
+            if len(new_points) == 0 or len(new_points[-1]) == 0:
+                break
+            
+            last_waypoint = new_points[-1][-1]  # último ponto da última chamada
+            current_pose = Vehicle_Pose()
+            current_pose.x_position_track_reference_frame = last_waypoint[0]
+            current_pose.y_position_track_reference_frame = last_waypoint[1]
+            current_pose.yaw_position_track_reference_frame = 0.0  # ou calcula baseado em vetor tangente
+
+            # Verifica se retornou ao ponto inicial
+            dx = current_pose.x_position_track_reference_frame - initial_pose.x_position_track_reference_frame
+            dy = current_pose.y_position_track_reference_frame - initial_pose.y_position_track_reference_frame
+            distance_to_start = np.hypot(dx, dy)
+
+            if distance_to_start <= distance_threshold:
+                break
+
+        # Junta todos os waypoints em uma única lista
+        closed_path = [point for segment in self.waypoints for point in segment]
+        return closed_path    
 
     def get_interpolated_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
         #interpola os pontos do path normal e concatenado e retorna os dois
