@@ -4,7 +4,7 @@ from rclpy.node import Node
 from fs_msgs.msg import ControlCommand
 from signals.signal_control import SignalsController
 import can
-from longitudinal_control.PID_controller import PIDController
+from longitudinal_control.PIDT_controller import PIDController
 
 class LowLevelControlSim(Node):
     def __init__(self):
@@ -34,8 +34,13 @@ class LowLevelControlSim(Node):
 def main(args=None):
     rclpy.init()
     low_level_control = LowLevelControlSim()
-    rclpy.spin(low_level_control)
-    rclpy.shutdown()
+    try:
+        rclpy.spin(low_level_control)
+    except:
+        low_level_control.signals.shutdown()
+    finally:
+        low_level_control.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
