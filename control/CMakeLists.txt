@@ -25,6 +25,12 @@ ament_target_dependencies(check_node
   lifecycle_msgs
 )
 
+ install(
+         PROGRAMS 
+         ros2/ros_can_publisher.py
+         DESTINATION lib/${PROJECT_NAME}
+ )
+
 install(TARGETS check_node
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -38,6 +44,12 @@ install(
 install(
         PROGRAMS 
         ros2/low_level_control_node.py
+        DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+        PROGRAMS 
+        ros2/low_level_control_node_sim.py
         DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -62,6 +74,12 @@ install(
 install(
         DIRECTORY
         signals
+        DESTINATION lib/${PROJECT_NAME} 
+)
+
+install(
+        DIRECTORY
+        can_classes
         DESTINATION lib/${PROJECT_NAME} 
 )
 
