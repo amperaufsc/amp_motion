@@ -23,7 +23,8 @@ private:
     publisher_->publish(msg);
     msg.steering += variacao_steering;
     msg.throttle += variacao_throttle;
-    if (msg.steering <= -1.0f || msg.steering >= 1.0f) variacao_steering = -variacao_steering;
+
+    if (msg.steering <= -100.0f || msg.steering >= 100.0f) variacao_steering = -variacao_steering;
     if ((msg.throttle <= 734.0f || msg.throttle >= 984.0f)) {
       if (count <= 6) {
         variacao_throttle = -variacao_throttle;
@@ -32,6 +33,7 @@ private:
         msg.throttle = 0;
       }
     }
+
     RCLCPP_INFO(this->get_logger(), "-------------------------------");
   }
 
@@ -39,7 +41,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   int count = 0;
   fs_msgs::msg::ControlCommand msg;
-  float variacao_steering = 1.0;
+  float variacao_steering = 20.0;
   float variacao_throttle = 50.0;
 };
 
