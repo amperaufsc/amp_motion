@@ -238,7 +238,7 @@ class PathNode(Node):
         # If the mission is "skidpad", load a predefined path from a CSV file and publish it
        if self.go_msg.mission == "skidpad":
            self.get_logger().info('skidpad received')
-           path = np.genfromtxt("/home/carlosmello/ws/src/as_amp/path_planning/ros2/skidpad.csv",
+           path = np.genfromtxt("/home/carlosmello/ws/src/as_amp/path_planning/reference_trajectory/skidpad.csv",
                               delimiter = ';',
                               skip_header = 1,
                               dtype = float,
