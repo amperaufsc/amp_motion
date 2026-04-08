@@ -24,13 +24,13 @@ install(
 
 install(
        PROGRAMS
-       ros2/skidpad.csv
+       reference_trajectory/skidpad.csv
        DESTINATION lib/${PROJECT_NAME}
 )
 
 install(
        PROGRAMS
-       ros2/acceleration.csv
+       reference_trajectory/acceleration.csv
        DESTINATION lib/${PROJECT_NAME}
 )
 
