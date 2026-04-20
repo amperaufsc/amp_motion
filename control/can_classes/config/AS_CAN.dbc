@@ -1,0 +1,173 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_:
+
+
+BO_ 1104 MPS_Susp_data: 8 Vector__XXX
+ SG_ Susp_TE : 48|16@1+ (0.01,0) [0|0] "" Vector__XXX
+ SG_ Susp_FD : 32|16@1+ (0.01,0) [0|0] "" Vector__XXX
+ SG_ Susp_FE : 16|16@1+ (0.01,0) [0|0] "" Vector__XXX
+ SG_ Susp_TD : 0|16@1+ (0.01,0) [0|0] "" Vector__XXX
+
+BO_ 1105 MPS_Angle_measure: 5 Vector__XXX
+ SG_ Pedal_angle : 32|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Steering_angle : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 1106 MPS_Brakes_data: 8 Vector__XXX
+ SG_ Pressure_T : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Pressure_F : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 865 Panel_Page: 1 Vector__XXX
+ SG_ Task_Mode : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 881 ECU_PowerTrain_data1: 8 Vector__XXX
+ SG_ Motor_Temperature : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Motor_RPM : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 882 ECU_PowerTrain_data2: 8 Vector__XXX
+ SG_ BMS_Current : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Inverter_Current : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 883 ECU_PoweTrain_data3: 8 Vector__XXX
+ SG_ Inverter_Temperature : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Inverter_Voltage : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 884 ECU_PowerTrain_data4: 7 Vector__XXX
+ SG_ Motor_Torque : 0|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ ACC_Pedal : 32|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Brake_Pedal : 40|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Cebolinha : 48|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 886 ECU_PowerTrain_data5: 8 Vector__XXX
+ SG_ Inverter_LV_Voltage : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Torque_Mod : 16|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 885 ECU_Motor_Power: 8 Vector__XXX
+ SG_ Motor_Input_Power : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Motor_Output_Power : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 288 RES: 1 Vector__XXX
+ SG_ RES : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 1088 WSM_Front: 8 Vector__XXX
+ SG_ Encoder_Front_Left : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Encoder_Front_Right : 0|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 1089 WSM_Rear: 8 Vector__XXX
+ SG_ Encoder_Rear_Left : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Encoder_Rear_Right : 0|32@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 560 Atuador: 1 Vector__XXX
+ SG_ Estercamento_Atuador : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 528 REF_Estercamento: 8 Vector__XXX
+ SG_ Ref_Estercamento_Atuador : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 273 Go_State: 1 Vector__XXX
+ SG_ Go_State : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 887 ECU_PowerTrain_data6: 8 Vector__XXX
+ SG_ HV_Voltage : 0|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Protection_Flags : 32|32@1- (1,0) [0|0] "" Vector__XXX
+
+BO_ 274 REF_Velocidade: 2 Vector__XXX
+ SG_ Ref_Velocidade : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+
+BO_ 888 ECU_PowerTrain_data7: 8 Vector__XXX
+ SG_ Car_Speed : 32|32@1- (1,0) [0|0] "" Vector__XXX
+ SG_ Avarage_Temperature : 24|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Max_Temperature : 16|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Battery_Charge : 8|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ State_Health : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+
+
+
+CM_ BO_ 1104 "Sensores da suspensao.";
+CM_ BO_ 1105 "Sensores do pedal.
+Angulo do volante.";
+CM_ BO_ 1106 "Sensores do freio.";
+CM_ BO_ 865 "Modos de prova.";
+CM_ BO_ 881 "Temperatura do motor.
+RMP do motor.";
+CM_ BO_ 882 "Corrente do Inversor.
+Corrente da BMS.";
+CM_ BO_ 883 "Temperatura do inversor.
+Tensao no inversor.";
+CM_ BO_ 884 "Torque do motor.
+Pedal de aceleracao.
+Pedal de freio.
+Cebolinha.";
+CM_ BO_ 886 "Inverter LV Voltage.";
+CM_ BO_ 885 "Tensao da EMUS.
+(Talvez mude dependendo da BMS que estiver sendo utilizada)";
+CM_ BO_ 288 "AS_status_emergency.
+AS_status_ready.";
+CM_ BO_ 1088 "Float Encoder front-left.
+Float Encoder front-right.";
+CM_ BO_ 1089 "Float Encoder rear-left.
+Float Encoder rear-right.";
+CM_ BO_ 560 "Estercamento Atuador.";
+CM_ BO_ 528 "Referencia Estercamento Atuador.";
+CM_ BO_ 273 "Go State.";
+CM_ BO_ 887 "Protection flags.
+HV Voltage.";
+CM_ BO_ 274 "Referencia de velocidade atuador.
+";
+CM_ BO_ 888 "Speed Km/h.
+Avarage Temperature.
+Max Temperature.
+Battery Charge.
+State Health.";
+SIG_VALTYPE_ 1105 Steering_angle : 1;
+SIG_VALTYPE_ 1106 Pressure_T : 1;
+SIG_VALTYPE_ 1106 Pressure_F : 1;
+SIG_VALTYPE_ 881 Motor_Temperature : 1;
+SIG_VALTYPE_ 881 Motor_RPM : 1;
+SIG_VALTYPE_ 882 BMS_Current : 1;
+SIG_VALTYPE_ 882 Inverter_Current : 1;
+SIG_VALTYPE_ 883 Inverter_Temperature : 1;
+SIG_VALTYPE_ 883 Inverter_Voltage : 1;
+SIG_VALTYPE_ 884 Motor_Torque : 1;
+SIG_VALTYPE_ 886 Inverter_LV_Voltage : 1;
+SIG_VALTYPE_ 885 Motor_Input_Power : 1;
+SIG_VALTYPE_ 885 Motor_Output_Power : 1;
+SIG_VALTYPE_ 1088 Encoder_Front_Left : 1;
+SIG_VALTYPE_ 1088 Encoder_Front_Right : 1;
+SIG_VALTYPE_ 1089 Encoder_Rear_Left : 1;
+SIG_VALTYPE_ 887 HV_Voltage : 1;
+SIG_VALTYPE_ 887 Protection_Flags : 1;
+SIG_VALTYPE_ 888 Car_Speed : 1;
+

@@ -29,9 +29,11 @@ class PIDController:
         self.I_ant = I
         self.D_ant = D 
 
-        if sinal_controle > self.max_signal:
+        sinal_controle_depois = sinal_controle
+
+        if sinal_controle_depois >= self.max_signal:
             sinal_controle_depois = self.max_signal
-        if sinal_controle < self.min_signal:
+        if sinal_controle_depois <= self.min_signal:
             sinal_controle_depois = self.min_signal
         
-        return sinal_controle, sinal_controle_depois
+        return float(sinal_controle), float(sinal_controle_depois)
