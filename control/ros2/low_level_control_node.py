@@ -34,10 +34,10 @@ class LowLevelControl(Node):
 
         self.kp = 0.75
         self.ki = 0.20
-        self.kd = 0.0005
+        self.kd = 0
         self.k  = 1
-        self.kt = 0.0005
-        self.t  = 0.1
+        self.kt = 0
+        self.t  = 0.05
         self.max_signal.data = 100
         self.min_signal.data = -100
         
@@ -54,7 +54,7 @@ class LowLevelControl(Node):
         try:
             message = self.can.can_listener.read_message()
             data = self.can.can_reader(message)                
-            self.sensor.data = data*2/255 - 1
+            self.sensor.data = ((200*(data - 40)/85) - 100)
 
             self.control_overshoot.data, self.control.data = self.pid.update_signal(reference.steering, self.sensor.data)
 
@@ -63,12 +63,13 @@ class LowLevelControl(Node):
             self.pub_control_overshoot.publish(self.control_overshoot)
             self.pub_min.publish(self.min_signal)
             self.pub_max.publish(self.max_signal)
-            if data > 155:
-                self.lcontrol.data = max(0.0, self.control.data)
-                self.signals.steer(self.lcontrol.data)
-            elif data < 100:
+            if data > 100:
                 self.lcontrol.data = min(0.0, self.control.data)
                 self.signals.steer(self.lcontrol.data)
+            elif data < 60:
+                self.lcontrol.data = max(0.0, self.control.data)
+                self.signals.steer(self.lcontrol.data)
+                
             else:
                 self.signals.steer(self.control.data)
 
@@ -77,7 +78,7 @@ class LowLevelControl(Node):
         except Exception as e:
             self.get_logger().info(f"{e}")
         if message != None:
-            self.get_logger().info(f"A mensagem é: {self.control.data} <-> {reference.steering} <-> {data} <-> {(data, self.sensor.data)}")
+            self.get_logger().info(f"A mensagem é: {self.control.data} <-> {self.control_overshoot.data} <-> {reference.steering} <-> {data} <-> {(data, self.sensor.data)}")
             
 
 def main(args=None):
