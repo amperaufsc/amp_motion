@@ -12,7 +12,7 @@ public:
     msg.steering = 0.0;
     msg.throttle = 734.0;
     publisher_ = this->create_publisher<fs_msgs::msg::ControlCommand>("/control_command", 10);
-    timer_ = this->create_wall_timer(500ms, std::bind(&FloatPublisher::timer_callback, this));
+    timer_ = this->create_wall_timer(100ms, std::bind(&FloatPublisher::timer_callback, this));
   }
 
 private:
@@ -41,7 +41,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   int count = 0;
   fs_msgs::msg::ControlCommand msg;
-  float variacao_steering = 20.0;
+  float variacao_steering = 10.0;
   float variacao_throttle = 50.0;
 };
 
