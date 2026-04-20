@@ -23,15 +23,15 @@ install(
 )
 
 install(
-       PROGRAMS
+       FILES
        ros2/skidpad.csv
-       DESTINATION lib/${PROJECT_NAME}
+       DESTINATION share/${PROJECT_NAME}/ros2
 )
 
 install(
-       PROGRAMS
+       FILES
        ros2/acceleration.csv
-       DESTINATION lib/${PROJECT_NAME}
+       DESTINATION share/${PROJECT_NAME}/ros2
 )
 
 

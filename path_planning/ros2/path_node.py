@@ -18,6 +18,8 @@ from bayesian_inference.bayesian_inference_planner import Bayesian_Inference_Gai
 from bayesian_inference.bayesian_inference_planner import Vehicle_Pose
 import sensor_msgs_py.point_cloud2 as pc2
 from std_msgs.msg import Header
+import os
+from ament_index_python.packages import get_package_share_directory
 
 
 class PathNode(Node):
@@ -211,7 +213,11 @@ class PathNode(Node):
         if self.go_msg.mission == "skidpad":
             self.get_logger().info('skidpad received')
 
-            path = np.genfromtxt("/home/bia/ws/src/as_amp/path_planning/ros2/skidpad.csv",
+            pkg_share_dir = get_package_share_directory('path_planning')
+
+            skidpad_csv_path = os.path.join(pkg_share_dir, 'ros2', 'skidpad.csv')
+
+            path = np.genfromtxt(skidpad_csv_path,
                                delimiter = ';',
                                skip_header = 1,
                                dtype = float,
