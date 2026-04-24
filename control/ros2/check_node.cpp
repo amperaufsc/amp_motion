@@ -9,7 +9,7 @@ class FloatPublisher : public rclcpp::Node
 public:
   FloatPublisher()  : Node("float_publisher")
   {
-    msg.steering = 0.0;
+    msg.steering = -100.0;
     msg.throttle = 734.0;
     publisher_ = this->create_publisher<fs_msgs::msg::ControlCommand>("/control_command", 10);
     timer_ = this->create_wall_timer(100ms, std::bind(&FloatPublisher::timer_callback, this));
@@ -21,7 +21,11 @@ private:
     RCLCPP_INFO(this->get_logger(), "Publicando throttle: %f", msg.throttle);
     RCLCPP_INFO(this->get_logger(), "Publicando steering: %f", msg.steering);
     publisher_->publish(msg);
-    msg.steering += variacao_steering;
+    if (steering_counter >= 10*3){
+      msg.steering += variacao_steering;
+      steering_counter = -1;
+    };
+    steering_counter++;
     msg.throttle += variacao_throttle;
 
     if (msg.steering <= -100.0f || msg.steering >= 100.0f) variacao_steering = -variacao_steering;
@@ -40,8 +44,9 @@ private:
   rclcpp::Publisher<fs_msgs::msg::ControlCommand>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   int count = 0;
+  int steering_counter = 0;
   fs_msgs::msg::ControlCommand msg;
-  float variacao_steering = 10.0;
+  float variacao_steering = 200.0;
   float variacao_throttle = 50.0;
 };
 
