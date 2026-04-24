@@ -19,11 +19,11 @@ class PIDController:
         I = self.I_ant + self.ki*self.T*(erro + self.erro_ant)
         D = self.D_ant + self.kd*((erro-self.erro_ant)/self.T)
         sinal_controle = P + I + D
-        if sinal_controle > self.max_signal:
-            Tt = -abs(self.Tt*self.T*(self.max_signal - sinal_controle))
+        if sinal_controle >= self.max_signal:
+            Tt = (self.Tt*self.T*(self.max_signal - sinal_controle))
             I += Tt
         elif sinal_controle < self.min_signal:
-            Tt = -abs(self.Tt*self.T*(sinal_controle - self.min_signal))
+            Tt = (self.Tt*self.T*(self.min_signal - sinal_controle))
             I += Tt
         self.erro_ant = erro
         self.I_ant = I
@@ -36,4 +36,4 @@ class PIDController:
         if sinal_controle_depois <= self.min_signal:
             sinal_controle_depois = self.min_signal
         
-        return float(sinal_controle), float(sinal_controle_depois)
+        return float(sinal_controle), float(sinal_controle_depois), float(erro)
