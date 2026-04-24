@@ -4,7 +4,7 @@ import can
 from can_classes.can_reader import StateCanReader
 from rclpy.node import Node
 from fs_msgs.msg import ControlCommand
-from std_msgs.msg import Int16, Float32
+from std_msgs.msg import Float32
 from signals.signal_control import SignalsController
 from longitudinal_control.PIDT_controller import PIDController
 
@@ -15,18 +15,19 @@ class LowLevelControl(Node):
         
         self.subscription = self.create_subscription(ControlCommand, '/control_command', self.control_callback, 10)
 
-        self.pub_sensor = self.create_publisher(Float32, 'sensor', 10)
-        self.pub_control_overshoot = self.create_publisher(Float32, 'control_overshoot', 10)
-        self.pub_control = self.create_publisher(Float32, 'control', 10)
-        self.pub_min = self.create_publisher(Int16, 'min', 10)
-        self.pub_max = self.create_publisher(Int16, 'max', 10)
+        self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
+        self.pub_control_overshoot = self.create_publisher(Float32, 'control/actual_value', 10)
+        self.pub_control = self.create_publisher(Float32, 'control/anti_windup_value', 10)
+        self.pub_control_error = self.create_publisher(Float32, 'control/error', 10)
+        self.pub_min = self.create_publisher(Float32, 'control/min_value', 10)
+        self.pub_max = self.create_publisher(Float32, 'control/max_value', 10)
 
         self.sensor = Float32()
         self.control = Float32()
-        self.lcontrol = Float32()
         self.control_overshoot = Float32()
-        self.min_signal = Int16()
-        self.max_signal = Int16()
+        self.error = Float32()
+        self.min_signal = Float32()
+        self.max_signal = Float32()
         
         self.left = 15
         self.right = 13
@@ -38,8 +39,10 @@ class LowLevelControl(Node):
         self.k  = 1
         self.kt = 0
         self.t  = 0.05
-        self.max_signal.data = 100
-        self.min_signal.data = -100
+        self.max_signal.data = 100.0
+        self.min_signal.data = -100.0
+        self.sensor_max = 120
+        self.sensor_min = 40
         
         self.signals = SignalsController(self.left, self.right, self.pwm)
  
@@ -54,31 +57,34 @@ class LowLevelControl(Node):
         try:
             message = self.can.can_listener.read_message()
             data = self.can.can_reader(message)                
-            self.sensor.data = ((200*(data - 40)/85) - 100)
-
-            self.control_overshoot.data, self.control.data = self.pid.update_signal(reference.steering, self.sensor.data)
+            self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max-self.sensor_min)) - 100))
+            
+            self.control_overshoot.data, self.control.data, self.error.data = self.pid.update_signal(reference.steering, self.sensor.data)
 
             self.pub_sensor.publish(self.sensor)
             self.pub_control.publish(self.control)
             self.pub_control_overshoot.publish(self.control_overshoot)
             self.pub_min.publish(self.min_signal)
             self.pub_max.publish(self.max_signal)
+            self.pub_control_error.publish(self.error)
+            
             if data > 100:
-                self.lcontrol.data = min(0.0, self.control.data)
-                self.signals.steer(self.lcontrol.data)
+                limited_control = min(0.0, self.control.data)
+                self.signals.steer(limited_control)
             elif data < 60:
-                self.lcontrol.data = max(0.0, self.control.data)
-                self.signals.steer(self.lcontrol.data)
-                
+                limited_control = max(0.0, self.control.data)
+                self.signals.steer(limited_control)      
             else:
-                self.signals.steer(self.control.data)
-
-
+                  self.signals.steer(self.control.data)
+                
+            self.sensor = Float32()
             
         except Exception as e:
             self.get_logger().info(f"{e}")
         if message != None:
-            self.get_logger().info(f"A mensagem é: {self.control.data} <-> {self.control_overshoot.data} <-> {reference.steering} <-> {data} <-> {(data, self.sensor.data)}")
+            self.get_logger().info(f'''
+Control: {self.control.data, self.control_overshoot.data, self.error.data}
+Reference: {reference.steering}\nSensor: {self.sensor.data}''')
             
 
 def main(args=None):
