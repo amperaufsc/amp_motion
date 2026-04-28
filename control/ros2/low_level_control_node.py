@@ -2,6 +2,7 @@
 import rclpy
 from rclpy.timer import Timer
 import can
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from can_classes.can_reader import StateCanReader
 from rclpy.node import Node
 from fs_msgs.msg import ControlCommand
@@ -13,7 +14,9 @@ from longitudinal_control.PIDT_controller import PIDController
 class LowLevelControl(Node):
     def __init__(self):
         super().__init__('low_level_control')
-               
+        group = MutuallyExclusiveCallbackGroup()
+        self.timer = Timer(callback=self.timer_callback, timer_period_ns=100000, callback_group=group, clock=)
+        
         self.subscription = self.create_subscription(ControlCommand, '/control_command', self.control_callback, 10)
 
         self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
@@ -55,12 +58,15 @@ class LowLevelControl(Node):
         self.get_logger().info("Funciona")
 
     def control_callback(self, reference: ControlCommand):
+        self.control_reference = reference.steering
+                
+    def timer_callback(self):
         try:
             message = self.can.can_listener.read_message()
             data = self.can.can_reader(message)                
             self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
             
-            self.control_overshoot.data, self.control.data, self.error.data = self.pid.update_signal(reference.steering, self.sensor.data)
+            self.control_overshoot.data, self.control.data, self.error.data = self.pid.update_signal(self.control_reference, self.sensor.data)
 
             self.pub_sensor.publish(self.sensor)
             self.pub_control.publish(self.control)
@@ -68,7 +74,7 @@ class LowLevelControl(Node):
             self.pub_min.publish(self.min_signal)
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
-            
+                
             if data > 100:
                 limited_control = min(0.0, self.control.data)
                 self.signals.steer(limited_control)
@@ -76,9 +82,9 @@ class LowLevelControl(Node):
                 limited_control = max(0.0, self.control.data)
                 self.signals.steer(limited_control)      
             else:
-                  self.signals.steer(self.control.data)
+                self.signals.steer(self.control.data)
                 
-            
+                
         except Exception as e:
             self.get_logger().info(f"{e}")
         if message == None:
@@ -86,11 +92,8 @@ class LowLevelControl(Node):
         else:
             self.get_logger().info(f'''
 Control: {self.control.data, self.control_overshoot.data, self.error.data}
-Reference: {reference.steering}\nSensor: {self.sensor.data}''')
-        self.get_logger().info("oi")
-        self.sensor = Float32()
-
-            
+Reference: {self.control_reference}\nSensor: {self.sensor.data}''')
+        self.sensor = Float32()        
 
 def main(args=None):
     rclpy.init()
