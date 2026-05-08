@@ -300,26 +300,25 @@ class PathNode(Node):
 
         # Converts the track cones into a PointCloud2 message for visualization
         
-        def track_to_pointcloud(self):
-                header = Header()
-                header.stamp = self.get_clock().now().to_msg()
-                header.frame_id = "/fsds/map" 
+    def track_to_pointcloud(self):
+        header = Header()
+        header.stamp = self.get_clock().now().to_msg()
+        header.frame_id = "/fsds/map" 
 
-                points = []
-                for cone in self.track_pointcloud_msg.track: 
-                    x = cone.location.x
-                    y = cone.location.y
-                    z = cone.location.z
-                    points.append([x, y, z])
+        points = []
+        for cone in self.track_pointcloud_msg.track: 
+            x = cone.location.x
+            y = cone.location.y
+            z = cone.location.z
+            points.append([x, y, z])
                     
-                fields = [
-                    PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
-                    PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
-                    PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1) 
-                ]
+        fields = [
+                PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+                PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+                PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1)]
             
-                pointcloud_msg = pc2.create_cloud(header, fields, points)
-                return pointcloud_msg
+        pointcloud_msg = pc2.create_cloud(header, fields, points)
+        return pointcloud_msg
     
 def main():
   rclpy.init()

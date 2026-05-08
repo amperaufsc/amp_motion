@@ -34,7 +34,6 @@ install(
        DESTINATION lib/${PROJECT_NAME}
 )
 
-
 install(
         DIRECTORY
         bayesian_inference
