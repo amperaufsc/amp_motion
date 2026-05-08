@@ -24,6 +24,9 @@ from bayesian_inference.speed_profile import SpeedProfile
 import sensor_msgs_py.point_cloud2 as pc2
 from std_msgs.msg import Header
 import matplotlib.pyplot as plt
+import os
+from ament_index_python.packages import get_package_share_directory
+
 
 class PathNode(Node):
 
@@ -34,7 +37,8 @@ class PathNode(Node):
         self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
         self.subscription = self.create_subscription(Track, 'track', self.track_callback, 10)
         self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
-        self.publisher_path = self.create_publisher(Motion, 'path', 10)
+        self.publisher_motion = self.create_publisher(Motion, 'motion', 10)
+        self.publisher_path = self.create_publisher(Path, 'path', 10)
         self.publisher_pointcloud = self.create_publisher(PointCloud2, 'track_pointcloud', 10)
 
         # Declaring the parameters that will later be defined in the path_planning.launcher.py file
@@ -204,7 +208,7 @@ class PathNode(Node):
             
         self.get_logger().info('Path Publishing')
         path_msg.odom = poses
-        self.publisher_path.publish(path_msg)
+        self.publisher_motion.publish(path_msg)
           
     def timer_callback(self):
         # Publishing the pointcloud extracted from the track
@@ -254,12 +258,16 @@ class PathNode(Node):
 
         if self.go_msg.mission == "skidpad":
             self.get_logger().info('skidpad received')
-            path = np.genfromtxt("/home/carlosmello/ws/src/as_amp/path_planning/reference_trajectory/skidpad.csv",
+            pkg_share_dir = get_package_share_directory('path_planning')
+
+            skidpad_csv_path = os.path.join(pkg_share_dir, 'ros2', 'skidpad.csv')
+
+            path = np.genfromtxt(skidpad_csv_path,
                                 delimiter = ';',
                                 skip_header = 1,
                                 dtype = float,
                                 invalid_raise = False)
-            
+
             path = [sublist[::-1] for sublist in path]
             for sublist in path:
                 sublist[1] *= -1
