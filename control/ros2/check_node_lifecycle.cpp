@@ -5,7 +5,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
-#include "rclcpp_lifecycle/lifecycle_publisher.hpp" // Cabeçalho essencial para o escopo do publisher
 #include "fs_msgs/msg/control_command.hpp"
 
 using namespace std::chrono_literals;
@@ -18,17 +17,20 @@ public:
   : rclcpp_lifecycle::LifecycleNode(node_name, 
       rclcpp::NodeOptions().use_intra_process_comms(intra_process_comms))
   {
+    msg.header.frame_id = ""; 
     msg.steering = 0.0f;
     msg.throttle = 734.0f;
+    msg.brake = 0.0f; // Inicialize o brake também, já que ele existe no .msg!
+
   }
 
   CallbackReturn on_configure(const rclcpp_lifecycle::State &) override
   {
     RCLCPP_INFO(get_logger(), "Configurando: Criando o lifecycle publisher...");
     
-    // RESOLVIDO: Chamada explícita pelo escopo da classe base para o ROS 2 Humble
-    publisher_ = this->rclcpp_lifecycle::LifecycleNode::create_lifecycle_publisher<fs_msgs::msg::ControlCommand>(
-      "/control_command", 10);
+    // SOLUÇÃO DO ERRO: No Humble, usamos o "create_publisher" padrão.
+    // Como a classe herda de LifecycleNode, ele gera automaticamente o tipo LifecyclePublisher.
+    publisher_ = this->create_publisher<fs_msgs::msg::ControlCommand>("/control_command", 10);
     
     return CallbackReturn::SUCCESS;
   }
@@ -36,7 +38,10 @@ public:
   CallbackReturn on_activate(const rclcpp_lifecycle::State &) override
   {
     RCLCPP_INFO(get_logger(), "Ativando: Ativando publisher e iniciando timer...");
+    
+    // Ativa a transmissão do publisher de ciclo de vida
     publisher_->on_activate();
+    
     timer_ = this->create_wall_timer(500ms, std::bind(&FloatPublisherLifecycle::timer_callback, this));
     return CallbackReturn::SUCCESS;
   }
@@ -67,6 +72,9 @@ public:
 private:
   void timer_callback()
   {
+    msg.header.stamp = this->get_clock()->now();
+    msg.header.frame_id = "base_link"; 
+    
     RCLCPP_INFO(this->get_logger(), "Publicando throttle: %f", msg.throttle);
     RCLCPP_INFO(this->get_logger(), "Publicando steering: %f", msg.steering);
     
@@ -87,6 +95,7 @@ private:
     RCLCPP_INFO(this->get_logger(), "-------------------------------");
   }
 
+  // Mantemos o tipo correto aqui para gerenciar os estados de on_activate()
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<fs_msgs::msg::ControlCommand>> publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   int count = 0;
@@ -103,4 +112,3 @@ int main(int argc, char * argv[])
   rclcpp::shutdown();
   return 0;
 }
-
