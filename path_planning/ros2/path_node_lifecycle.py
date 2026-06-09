@@ -33,7 +33,7 @@ class PathNode(LifecycleNode):
         try:
             self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
             self.subscription = self.create_subscription(Track, 'track_pub', self.track_callback, 10)
-            self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
+            self.subscription = self.create_subscription(GoSignal, 'SMACC/go', self.go_callback, 10)
             self.publisher_ = self.create_publisher(Path, 'path', 10)
             self.publisher_pointcloud = self.create_publisher(PointCloud2, 'track_pointcloud',10)
             
