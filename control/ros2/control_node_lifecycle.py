@@ -5,7 +5,7 @@ from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool, Float32
 from rclpy.duration import Duration
 import numpy as np
 from fs_msgs.msg import ControlCommand
@@ -31,6 +31,7 @@ class ControlNode(LifecycleNode):
 
             self.subscription = self.create_subscription(Path, 'path', self.path_callback, 10)
             self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
+            self.subscription = self.create_subscription(Bool, 'go', self.go_callback, 10)
 
             self.publisher_ = self.create_publisher(ControlCommand, 'control', 10)
             self.speed_publisher_ = self.create_publisher(Float32, '/speed', 10)
@@ -68,7 +69,7 @@ class ControlNode(LifecycleNode):
                             # Publisher resposnavel pela ativação dos leds do carro baseado em seu estado
             self.led_pub = self.create_publisher(String, '/AMP/as_status_indicator', 10)
             self.led_msg = String()
-
+            self.go_msg = False
             self.get_logger().info("CONTROL CONFIGURADO")
             return TransitionCallbackReturn.SUCCESS
         except Exception as e:
@@ -126,94 +127,98 @@ class ControlNode(LifecycleNode):
         
         self.vehicle_state = Vehicle_State(self.position[0], self.position[1], yaw, self.body_linear_velocity_x, self.body_linear_velocity_y, 0)
         
+    def go_callback(self, msg):
+        self.get_logger().info('Go Received: "%s"' %msg.data)
+        self.go_msg = msg.data
 
 
     def timer_callback(self):
         try:
-            if self.received_odom:                
-                #speed = ((self.body_linear_velocity_x)**2 + (self.body_linear_velocity_y)**2)**0.5
-                speed = self.body_linear_velocity_x
-                #self.get_logger().info('Speed: "%f"' %speed)
-                speed_msg = Float32()
-                speed_msg.data = speed
+            if self.go_msg:
+                if self.received_odom:                
+                    #speed = ((self.body_linear_velocity_x)**2 + (self.body_linear_velocity_y)**2)**0.5
+                    speed = self.body_linear_velocity_x
+                    #self.get_logger().info('Speed: "%f"' %speed)
+                    speed_msg = Float32()
+                    speed_msg.data = speed
 
-                erro_ant = self.longitudinal_controller.erro
-                erro_ant_msg = Float32()
-                erro_ant_msg.data = erro_ant
+                    erro_ant = self.longitudinal_controller.erro
+                    erro_ant_msg = Float32()
+                    erro_ant_msg.data = erro_ant
 
-                eh = self.control.eh
-                eh_msg = Float32()
-                eh_msg.data = eh
+                    eh = self.control.eh
+                    eh_msg = Float32()
+                    eh_msg.data = eh
 
-                ey = self.control.ey
-                ey_msg = Float32()
-                ey_msg.data = ey
-
-
-                if self.received_path:
-                    self.closest_index = np.argmin([np.linalg.norm(i) for i in (self.path[self.closest_index:self.closest_index + 10] - self.position)])
-                    self.get_logger().info('index: "%f"' %self.closest_index)
-
-                    self.reference_path = self.path[self.closest_index:]
-                    if self.closest_index < len(self.speed_profile):
-                        self.speed_reference = self.speed_profile[self.closest_index]
-    #                 '''if self.closest_index < len(self.speed_profile):
-    #                     self.speed_reference = self.speed_profile[self.closest_index + 1]'''
-            
-            
-    # '''175-control-bia-antunes
-                    
-    #                 self.speed_reference = 4.0
-                    
-    #                 self.longitudinal_controller = Longitudinal_Controller(0.8, 0.08, 0.0, 0.01, self.speed_reference)'''
-
-                    
-                    self.speed_reference = 4.0
-                    self.longitudinal_controller = Longitudinal_Controller(0.05, 0.01, 0.0, 0.1, self.speed_reference)
+                    ey = self.control.ey
+                    ey_msg = Float32()
+                    ey_msg.data = ey
 
 
-                    #self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
-                    self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
-                    
-                    '''
-                    
-                    - - -----  OLD VERSION OF CONTROL TIMER_CALLBACK ----- - - 
-                    
-                    self.closest_index = np.argmin(np.abs(self.timestamp - self.odom_time_stamp_float))
-                    self.closest_index = np.argmin([np.linalg.norm(i) for i in (self.path[self.closest_index:self.closest_index + 10] - self.position)]) + self.closest_index
-                    self.get_logger().info('time: "%d"' %self.closest_index)
-                    self.reference_path = self.path[self.closest_index:]
-                    self.path = self.path[closest_arg:]
-                    self.path = self.path[closest_time_index + 90:]
-                    self.reference_path = self.path[closest_time_index:]
-                    self.get_logger().info('time: "%d"' %closest_time_index)
-                    '''
-                    
-                    self.path_publishing(self.reference_path)
-                    steering_command = - self.control.update_steering_angle_control_signal(self.reference_path, self.vehicle_state)
-                    throttle_command, brake_command = self.longitudinal_controller.update_torque_control_signal(self.path, self.vehicle_state)
+                    if self.received_path:
+                        self.closest_index = np.argmin([np.linalg.norm(i) for i in (self.path[self.closest_index:self.closest_index + 10] - self.position)])
+                        self.get_logger().info('index: "%f"' %self.closest_index)
 
-                    #self.get_logger().debug('Steering: "%f"' %steering_command)
-                    self.get_logger().debug('Throttle: "%f"' %throttle_command)
-                    self.get_logger().debug('Steering: "%f"' %steering_command)
-                    self.get_logger().debug('Throttle: "%f"' %throttle_command)
+                        self.reference_path = self.path[self.closest_index:]
+                        if self.closest_index < len(self.speed_profile):
+                            self.speed_reference = self.speed_profile[self.closest_index]
+        #                 '''if self.closest_index < len(self.speed_profile):
+        #                     self.speed_reference = self.speed_profile[self.closest_index + 1]'''
+                
+                
+        # '''175-control-bia-antunes
+                        
+        #                 self.speed_reference = 4.0
+                        
+        #                 self.longitudinal_controller = Longitudinal_Controller(0.8, 0.08, 0.0, 0.01, self.speed_reference)'''
+
+                        
+                        self.speed_reference = 4.0
+                        self.longitudinal_controller = Longitudinal_Controller(0.05, 0.01, 0.0, 0.1, self.speed_reference)
 
 
-                    msg = ControlCommand()
-                    msg.steering = steering_command
-                    msg.throttle = throttle_command
-                    msg.brake = brake_command 
+                        #self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
+                        self.get_logger().info('speed_reference: "%f"' %self.speed_reference)
+                        
+                        '''
+                        
+                        - - -----  OLD VERSION OF CONTROL TIMER_CALLBACK ----- - - 
+                        
+                        self.closest_index = np.argmin(np.abs(self.timestamp - self.odom_time_stamp_float))
+                        self.closest_index = np.argmin([np.linalg.norm(i) for i in (self.path[self.closest_index:self.closest_index + 10] - self.position)]) + self.closest_index
+                        self.get_logger().info('time: "%d"' %self.closest_index)
+                        self.reference_path = self.path[self.closest_index:]
+                        self.path = self.path[closest_arg:]
+                        self.path = self.path[closest_time_index + 90:]
+                        self.reference_path = self.path[closest_time_index:]
+                        self.get_logger().info('time: "%d"' %closest_time_index)
+                        '''
+                        
+                        self.path_publishing(self.reference_path)
+                        steering_command = - self.control.update_steering_angle_control_signal(self.reference_path, self.vehicle_state)
+                        throttle_command, brake_command = self.longitudinal_controller.update_torque_control_signal(self.path, self.vehicle_state)
 
-                    self.publisher_.publish(msg)
-                    self.speed_publisher_.publish(speed_msg)
-                    self.erro_ant_publisher_.publish(erro_ant_msg)
-                    self.eh_publisher_.publish(eh_msg)
-                    self.ey_publisher_.publish(ey_msg)
+                        #self.get_logger().debug('Steering: "%f"' %steering_command)
+                        self.get_logger().debug('Throttle: "%f"' %throttle_command)
+                        self.get_logger().debug('Steering: "%f"' %steering_command)
+                        self.get_logger().debug('Throttle: "%f"' %throttle_command)
+
+
+                        msg = ControlCommand()
+                        msg.steering = steering_command
+                        msg.throttle = throttle_command
+                        msg.brake = brake_command 
+
+                        self.publisher_.publish(msg)
+                        self.speed_publisher_.publish(speed_msg)
+                        self.erro_ant_publisher_.publish(erro_ant_msg)
+                        self.eh_publisher_.publish(eh_msg)
+                        self.ey_publisher_.publish(ey_msg)
+                    else:
+                        self.get_logger().warn("Path not received")
                 else:
-                    self.get_logger().warn("Path not received")
-            else:
-                #self.get_logger().warn("Odom not received")
-                a="string so pro else nao dar merda e o print n ficar enchendo meu saco.pode tirar"
+                    #self.get_logger().warn("Odom not received")
+                    a="string so pro else nao dar merda e o print n ficar enchendo meu saco.pode tirar"
         except Exception as e:
             event = TransitionEvent()
             self.transition_pub_emergency(event) # Muda o estado do carro pra Emergency
