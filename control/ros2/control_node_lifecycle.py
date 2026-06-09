@@ -25,7 +25,8 @@ from std_msgs.msg import String
 class ControlNode(LifecycleNode):
     def __init__(self):
         super().__init__('control_node')
-
+        self.get_logger().info("CONTROL NODE INICIALIZADO")
+        
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         try:
 
@@ -86,7 +87,14 @@ class ControlNode(LifecycleNode):
         except Exception as e:
             self.get_logger().info("FALHA AO ATIVAR O CONTROL")
             return TransitionCallbackReturn.FAILURE
-
+    
+    def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
+        try:
+            self.get_logger().info("CONTROL DESATIVADO")
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().info("FALHA AO DESATIVAR O CONTROL")
+            return TransitionCallbackReturn.FAILURE
 
     def path_callback(self, path_msg):
         #self.get_logger().info('Path Received: ')
