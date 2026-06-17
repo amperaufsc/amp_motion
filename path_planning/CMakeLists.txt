@@ -19,6 +19,8 @@ find_package(fs_msgs REQUIRED)
 install(
         PROGRAMS 
         ros2/path_node.py 
+        ros2/path_node_life.py
+        ros2/path_node_life_base.py
         DESTINATION lib/${PROJECT_NAME}
 )
 
