@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import rclpy
-from rclpy.timer import Timer
 import can
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from can_classes.can_reader import StateCanReader
@@ -13,10 +12,7 @@ from longitudinal_control.PIDT_controller import PIDController
 
 class LowLevelControl(Node):
     def __init__(self):
-        super().__init__('low_level_control')
-        group = MutuallyExclusiveCallbackGroup()
-        self.timer = Timer(callback=self.timer_callback, timer_period_ns=100000, callback_group=group, clock=)
-        
+        super().__init__('low_level_control')    
         self.subscription = self.create_subscription(ControlCommand, '/control_command', self.control_callback, 10)
 
         self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
@@ -47,6 +43,8 @@ class LowLevelControl(Node):
         self.min_signal.data = -100.0
         self.sensor_max = 120.0
         self.sensor_min = 40.0
+
+        self.control_reference = 0
         
         self.signals = SignalsController(self.left, self.right, self.pwm)
  
@@ -54,6 +52,8 @@ class LowLevelControl(Node):
             self.kp, self.ki, self.kd, self.t, self.kt, self.max_signal.data, self.min_signal.data)   
         
         self.can = StateCanReader()
+
+        self.timer = self.create_timer(1/80, self.timer_callback)
 
         self.get_logger().info("Funciona")
 
