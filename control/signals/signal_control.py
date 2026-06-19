@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 class SignalsController:
     def __init__(self, left, right, PWM):
         GPIO.setmode(GPIO.BOARD)
-        self.pwm = GPIO.PWM(PWM, 100)
+        self.pwm = GPIO.PWM(PWM, 200)
         self.pwm.start(0)
         self.left = left
         self.right = right
