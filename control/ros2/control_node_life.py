@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 import rclpy
-from rclpy.node import Node
+#---------------------
+#Lifecycle imports
+from rclpy.lifecycle import LifecycleNode
+from rclpy.lifecycle import LifecycleState
+from rclpy.lifecycle import TransitionCallbackReturn
+#---------------------
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose
@@ -17,20 +22,43 @@ from longitudinal_control.longitudinal_controller import Longitudinal_Controller
 from longitudinal_control.PID_controller import PIDController
 import yaml
 
+#---------------------
+# Debbug Messages:
+#   self.get_logger().info('Path Unconfigured. (o_o)')
+#   self.get_logger().info('Configuring PathNode... (o.o)')
+#   self.get_logger().info('Activating PathNode... (o‿o)')
+#   self.get_logger().info('Deactivating PathNode... (-‿-)')
+#   self.get_logger().info('Cleaning up PathNode...(x‿x)')
+#   self.get_logger().info('Shutting down PathNode... (x_x)')
+#---------------------
 
-class ControlNode(Node):
+
+class ControlNode(LifecycleNode):
     def __init__(self):
         super().__init__('control_node')
+        self.get_logger().info('Path Unconfigured. (o_o)')
+        self.subscription_path = None
+        self.subscription_odom = None
+        self.publisher_ = None
+        self.speed_publisher_ = None
+        self.erro_ant_publisher_ = None
+        self.eh_publisher_ = None
+        self.ey_publisher_ = None
+        self.path_publisher_ = None
+        self.timer = None
 
-        self.subscription = self.create_subscription(Path, 'path', self.path_callback, 10)
-        self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
+    #---------------------
+    #Base lifecycle callback
+    # def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+    #     return TransitionCallbackReturn.SUCCESS #More common and simple
+    #     return super().on_activate(state) #Used in activate and deactivate because it's more sensitive
+    #---------------------
+    
 
-        self.publisher_ = self.create_publisher(ControlCommand, 'control', 10)
-        self.speed_publisher_ = self.create_publisher(Float32, '/speed', 10)
-        self.erro_ant_publisher_ = self.create_publisher(Float32, '/erro_ant', 10)
-        self.eh_publisher_ = self.create_publisher(Float32, '/eh', 10)
-        self.ey_publisher_ = self.create_publisher(Float32, '/ey', 10)
-        self.path_publisher_ = self.create_publisher(Path, 'reference_path', 10)
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info('Configuring PathNode... (o.o)')
+        self.subscription_path = self.create_subscription(Path, 'path', self.path_callback, 10)
+        self.subscription_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
 
         # difinição dos parametros que estão no arquivo yaml (control/config/control_parameters.yaml)
         self.declare_parameter('Kp', 0.0)
@@ -41,6 +69,7 @@ class ControlNode(Node):
         self.declare_parameter('speed', 0.0)
         self.declare_parameter('sampling_period', 0.01)
 
+
         self.Kp = self.get_parameter('Kp').value
         self.Ki = self.get_parameter('Ki').value
         self.Kd = self.get_parameter('Kd').value
@@ -49,10 +78,8 @@ class ControlNode(Node):
         self.speed = self.get_parameter('speed').value
         self.T = self.get_parameter('sampling_period').value
 
-        self.timer = self.create_timer(float(self.T), self.timer_callback)
         self.index = 0
-        self.get_logger().info('Control started')
-        
+
         vehicle_parameters = Vehicle_Parameters(1, np.radians(35), np.radians(-35)) #axle_length - steering_up_limit - steering_down_limit
 
         kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(self.Key, self.Keh) #lateral error gain - orientation error gain
@@ -62,8 +89,61 @@ class ControlNode(Node):
         self.received_path= False
         self.received_odom = False
         self.closest_index = 0
-        
-        
+
+        return TransitionCallbackReturn.SUCCESS
+    
+
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info('Activating PathNode... (o‿o)')
+
+        self.publisher_ = self.create_lifecycle_publisher(ControlCommand, 'control', 10)
+        self.speed_publisher_ = self.create_lifecycle_publisher(Float32, '/speed', 10)
+        self.erro_ant_publisher_ = self.create_lifecycle_publisher(Float32, '/erro_ant', 10)
+        self.eh_publisher_ = self.create_lifecycle_publisher(Float32, '/eh', 10)
+        self.ey_publisher_ = self.create_lifecycle_publisher(Float32, '/ey', 10)
+        self.path_publisher_ = self.create_lifecycle_publisher(Path, 'reference_path', 10)
+
+        self.timer = self.create_timer(float(self.T), self.timer_callback)
+
+        return super().on_activate(state)
+
+
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info('Deactivating PathNode... (-‿-)')
+
+        if self.timer is not None:
+            self.destroy_timer(self.timer)
+            self.timer = None
+
+        self._destroy_publishers()
+        return super().on_deactivate(state)
+
+
+    def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info('Cleaning up PathNode...(x‿x)')
+
+        self._destroy_subscriptions()
+
+        self.received_path = False
+        self.received_odom = False
+        self.closest_index = 0
+
+        return TransitionCallbackReturn.SUCCESS
+
+
+    def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
+        self.get_logger().info('Shutting down PathNode... (x_x)')
+
+        if self.timer is not None:
+            self.destroy_timer(self.timer)
+            self.timer = None
+
+        self._destroy_publishers()
+        self._destroy_subscriptions()
+
+        return TransitionCallbackReturn.SUCCESS
+
+    
     def path_callback(self, path_msg):
         self.path = []
         self.timestamp = []
@@ -169,6 +249,38 @@ class ControlNode(Node):
             
         path_msg.poses = poses
         self.path_publisher_.publish(path_msg)
+    
+    #Função Própria
+    def _destroy_publishers(self, names=None):
+        if names is None:
+            names = [
+                'publisher_',
+                'speed_publisher_',
+                'erro_ant_publisher_',
+                'eh_publisher_',
+                'ey_publisher_',
+                'path_publisher_'
+            ]
+
+        for name in names:
+            pub = getattr(self, name, None)
+            if pub is not None:
+                self.destroy_lifecycle_publisher(pub)
+                setattr(self, name, None)
+
+    #Função Própria
+    def _destroy_subscriptions(self, names=None):
+        if names is None:
+            names = [
+                'subscription_path',
+                'subscription_odom'
+            ]
+
+        for name in names:
+            sub = getattr(self, name, None)
+            if sub is not None:
+                self.destroy_subscription(sub)
+                setattr(self, name, None)
 
 
 def main(args=None):

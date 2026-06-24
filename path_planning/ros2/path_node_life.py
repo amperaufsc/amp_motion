@@ -49,7 +49,7 @@ class PathNode(LifecycleNode):
         super().__init__('path_node')
 
         #Reservando espaço pra usar depois
-        self.get_logger().info('Unconfigured.')
+        self.get_logger().info('Path Unconfigured. (o_o)')
         self._sub_odom = None
         self._sub_track = None
         self._sub_go = None
@@ -57,13 +57,6 @@ class PathNode(LifecycleNode):
         self._publisher_concatenated = None
         self._publisher_pointcloud = None
         self._timer = None
-
-
-    #Lifecycle Callbacks
-
-    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
-        #Escuta para ter as informações mas não publica
-        self.get_logger().info('Configuring PathNode...')
 
         self.declare_parameter('max_angle_change_gain', 5.0)
         self.declare_parameter('std_dvt_track_width_gain', 0.0)
@@ -73,85 +66,110 @@ class PathNode(LifecycleNode):
         self.declare_parameter('T', 0.01)
         self.declare_parameter('frame_id', 'frame_id')
 
-        max_angle_change_gain = float(self.get_parameter('max_angle_change_gain').value)
-        std_dvt_track_width_gain = float(self.get_parameter('std_dvt_track_width_gain').value)
-        std_dvt_left_right_cones = float(self.get_parameter('std_dvt_left_right_cones').value)
-        max_wrong_color_gain = float(self.get_parameter('max_wrong_color_gain').value)
-        sqd_diff_path_len_sensor_range = float(self.get_parameter('sqd_diff_path_len_sensor_range').value)
-        self._T = float(self.get_parameter('T').value)
-        self._frame_id = self.get_parameter('frame_id').value
 
-        self.get_logger().info('max_angle_change_gain:"%f"' % max_angle_change_gain)
-        self.get_logger().info('std_dvt_track_width_gain:"%f"' % std_dvt_track_width_gain)
-        self.get_logger().info('std_dvt_left_right_cones:"%f"' % std_dvt_left_right_cones)
+    #Lifecycle Callbacks
 
-        gains = Bayesian_Inference_Gains(
-            max_angle_change_gain,
-            std_dvt_track_width_gain,
-            std_dvt_left_right_cones,
-            max_wrong_color_gain,
-            sqd_diff_path_len_sensor_range,
-        )
-        self.planner = Bayesian_Inference_Planner(gains)
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        #Escuta para ter as informações mas não publica
+        self.get_logger().info('Configuring PathNode...')
+        
+        try:
+            self._sub_odom = self.create_subscription(Odometry, '/fsds/testing_only/odom', self.odom_callback, 10)
+            self._sub_track = self.create_subscription(Track, '/fsds/testing_only/track', self.track_callback, 10)
+            self._sub_go = self.create_subscription(GoSignal, '/fsds/signal/go', self.go_callback, 10)
+            #Lifecycle publisher pode ser desativado e ativado
+            self._publisher_ = self.create_lifecycle_publisher(Path, 'path', 10)
+            self._publisher_concatenated = self.create_lifecycle_publisher(Path, 'path_concatenated', 10)
+            self._publisher_pointcloud = self.create_lifecycle_publisher(PointCloud2, 'track_pointcloud', 10)
 
-        self.track_received = False
-        self.odom_received = False
-        self.obstacle_numpy_array = []
-        self.car_position_x = []
-        self.car_position_y = []
-        self.yaw = []
-        self.car_pose = Vehicle_Pose(self.car_position_x, self.car_position_y, self.yaw)
-        self.go_msg = GoSignal()
-        self.time_stamp = self.get_clock().now().to_msg()
-        self.index = 0
-        self.position = np.array([0, 0])
-        self.obstacle_global = []
+            max_angle_change_gain = float(self.get_parameter('max_angle_change_gain').value)
+            std_dvt_track_width_gain = float(self.get_parameter('std_dvt_track_width_gain').value)
+            std_dvt_left_right_cones = float(self.get_parameter('std_dvt_left_right_cones').value)
+            max_wrong_color_gain = float(self.get_parameter('max_wrong_color_gain').value)
+            sqd_diff_path_len_sensor_range = float(self.get_parameter('sqd_diff_path_len_sensor_range').value)
+            self._T = float(self.get_parameter('T').value)
+            self._frame_id = self.get_parameter('frame_id').value
 
-        self._sub_odom = self.create_subscription(
-            Odometry, '/fsds/testing_only/odom', self.odom_callback, 10)
-        self._sub_track = self.create_subscription(
-            Track, '/fsds/testing_only/track', self.track_callback, 10)
-        self._sub_go = self.create_subscription(
-            GoSignal, '/fsds/signal/go', self.go_callback, 10)
+            self.get_logger().info('max_angle_change_gain:"%f"' % max_angle_change_gain)
+            self.get_logger().info('std_dvt_track_width_gain:"%f"' % std_dvt_track_width_gain)
+            self.get_logger().info('std_dvt_left_right_cones:"%f"' % std_dvt_left_right_cones)
 
-        return TransitionCallbackReturn.SUCCESS
+            gains = Bayesian_Inference_Gains(
+                max_angle_change_gain,
+                std_dvt_track_width_gain,
+                std_dvt_left_right_cones,
+                max_wrong_color_gain,
+                sqd_diff_path_len_sensor_range,
+            )
+            self.planner = Bayesian_Inference_Planner(gains)
+
+            #Mudado para não declarar as variáveis uma segunda vez
+            max_angle_change_gain = float(self.get_parameter('max_angle_change_gain').value)
+            std_dvt_track_width_gain = float(self.get_parameter('std_dvt_track_width_gain').value)
+            std_dvt_left_right_cones = float(self.get_parameter('std_dvt_left_right_cones').value)
+            max_wrong_color_gain = float(self.get_parameter('max_wrong_color_gain').value)
+            sqd_diff_path_len_sensor_range = float(self.get_parameter('sqd_diff_path_len_sensor_range').value)
+
+
+            self.track_received = False
+            self.odom_received = False
+            self.obstacle_numpy_array = []
+            self.car_position_x = []
+            self.car_position_y = []
+            self.yaw = []
+            self.car_pose = Vehicle_Pose(self.car_position_x, self.car_position_y, self.yaw)
+            self.go_msg = GoSignal()
+            self.time_stamp = self.get_clock().now().to_msg()
+            self.index = 0
+            self.position = np.array([0, 0])
+            self.obstacle_global = []
+
+            
+            self.get_logger().info('Pathnode Configured! (o.o)')
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().error(f"Configuration failed: {e}")
+            return TransitionCallbackReturn.FAILURE
 
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
         #Começa a publicar e o timer
         self.get_logger().info('Activating PathNode...')
 
-        #Lifecycle publisher pode ser desativado e ativado
-        self._publisher_ = self.create_lifecycle_publisher(Path, 'path', 10)
-        self._publisher_concatenated = self.create_lifecycle_publisher(Path, 'path_concatenated', 10)
-        self._publisher_pointcloud = self.create_lifecycle_publisher(PointCloud2, 'track_pointcloud', 10)
+        try:
+            self._publisher_.on_activate(state)
+            self._publisher_concatenated.on_activate(state)
+            self._publisher_pointcloud.on_activate(state)
 
-        self._timer = self.create_timer(self._T, self.timer_callback)
+            self._timer = self.create_timer(self._T, self.timer_callback)
+            self.get_logger().info('Pathnode Activated! (o‿o)')
+            return super().on_activate(state)
 
-        return super().on_activate(state)
+        except Exception as e:
+            self.get_logger().error(f"Activation failed: {e}")
+            return TransitionCallbackReturn.FAILURE
+
 
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
         #Contrário do on_activate
         self.get_logger().info('Deactivating PathNode...')
 
-        if self._timer is not None:
-            self.destroy_timer(self._timer)
-            self._timer = None
+        try:
+            if self._timer is not None:
+                self.destroy_timer(self._timer)
+                self._timer = None
+            
+            self._publisher_.on_deactivate(state)
+            self._publisher_concatenated.on_deactivate(state)
+            self._publisher_pointcloud.on_deactivate(state)
 
-        if self._publisher_ is not None:
-            self.destroy_lifecycle_publisher(self._publisher_)
-            self._publisher_ = None
+            self.get_logger().info('Pathnode Deactivated! (-‿-)')
+            return super().on_deactivate(state)
 
-        if self._publisher_concatenated is not None:
-            self.destroy_lifecycle_publisher(self._publisher_concatenated)
-            self._publisher_concatenated = None
-
-        if self._publisher_pointcloud is not None:
-            self.destroy_lifecycle_publisher(self._publisher_pointcloud)
-            self._publisher_pointcloud = None
-
-        return super().on_deactivate(state)
+        except Exception as e:
+            self.get_logger().error(f"Deactivation failed: {e}")
+            return TransitionCallbackReturn.FAILURE
 
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -159,29 +177,25 @@ class PathNode(LifecycleNode):
         # Não precisa limpar os publishers pq é necessário passar pelo deactivate
         self.get_logger().info('Cleaning up PathNode...')
 
-        if self._sub_odom is not None:
-            self.destroy_subscription(self._sub_odom)
-            self._sub_odom = None
+        try:
+            self._destroy_subscriptions()
+            self._destroy_publishers()
 
-        if self._sub_track is not None:
-            self.destroy_subscription(self._sub_track)
-            self._sub_track = None
-
-        if self._sub_go is not None:
-            self.destroy_subscription(self._sub_go)
-            self._sub_go = None
-
-        self.track_received = False
-        self.odom_received = False
-        self.obstacle_numpy_array = []
-        self.car_position_x = []
-        self.car_position_y = []
-        self.yaw = []
-        self.go_msg = GoSignal()
-        self.position = np.array([0, 0])
-        self.obstacle_global = []
-
-        return TransitionCallbackReturn.SUCCESS
+            self.track_received = False
+            self.odom_received = False
+            self.obstacle_numpy_array = []
+            self.car_position_x = []
+            self.car_position_y = []
+            self.yaw = []
+            self.go_msg = GoSignal()
+            self.position = np.array([0, 0])
+            self.obstacle_global = []
+            
+            self.get_logger().info('PathNode Cleaned Up! (x‿x)')
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().error(f"Cleaning failed: {e}")
+            return TransitionCallbackReturn.FAILURE
 
 
     def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -191,23 +205,20 @@ class PathNode(LifecycleNode):
         """
         self.get_logger().info('Shutting down PathNode...')
 
-        if self._timer is not None:
-            self.destroy_timer(self._timer)
-            self._timer = None
+        try:
+            if self._timer is not None:
+                self.destroy_timer(self._timer)
+                self._timer = None
+            
+            self._destroy_subscriptions()
+            self._destroy_publishers()
 
-        for pub_attr in ('_publisher_', '_publisher_concatenated', '_publisher_pointcloud'):
-            pub = getattr(self, pub_attr, None)
-            if pub is not None:
-                self.destroy_lifecycle_publisher(pub)
-                setattr(self, pub_attr, None)
-
-        for sub_attr in ('_sub_odom', '_sub_track', '_sub_go'):
-            sub = getattr(self, sub_attr, None)
-            if sub is not None:
-                self.destroy_subscription(sub)
-                setattr(self, sub_attr, None)
-
-        return TransitionCallbackReturn.SUCCESS
+            
+            self.get_logger().info('PathNode Shutted Down! (x_x)')
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().error(f"Shutdown failed: {e}")
+            return TransitionCallbackReturn.FAILURE
 
     
     def track_callback(self, msg):
@@ -402,6 +413,37 @@ class PathNode(LifecycleNode):
         pointcloud_msg = pc2.create_cloud(header, fields, points)
         return pointcloud_msg
       
+    #Função Própria
+    def _destroy_publishers(self, names=None):
+        if names is None:
+            names = [
+                '_publisher_',
+                '_publisher_concatenated',
+                '_publisher_pointcloud'
+            ]
+
+        for name in names:
+            pub = getattr(self, name, None)
+
+            if pub is not None:
+                self.destroy_lifecycle_publisher(pub)
+                setattr(self, name, None)
+
+
+    def _destroy_subscriptions(self, names=None):
+        if names is None:
+            names = [
+                '_sub_odom',
+                '_sub_track',
+                '_sub_go'
+            ]
+
+        for name in names:
+            sub = getattr(self, name, None)
+
+            if sub is not None:
+                self.destroy_subscription(sub)
+                setattr(self, name, None)
 def main():
    rclpy.init()
    path_node = PathNode()

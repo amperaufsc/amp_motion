@@ -32,6 +32,7 @@ install(TARGETS check_node
 install(
         PROGRAMS 
         ros2/control_node.py
+        ros2/control_node_life.py
         DESTINATION lib/${PROJECT_NAME}
 )
 
