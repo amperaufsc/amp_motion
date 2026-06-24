@@ -49,7 +49,7 @@ class PathNode(LifecycleNode):
         super().__init__('path_node')
 
         #Reservando espaço pra usar depois
-        self.get_logger().info('Path Unconfigured. (o_o)')
+        self.get_logger().info('Control Unconfigured. (o_o)')
         self._sub_odom = None
         self._sub_track = None
         self._sub_go = None
@@ -129,7 +129,7 @@ class PathNode(LifecycleNode):
             return TransitionCallbackReturn.SUCCESS
         except Exception as e:
             self.get_logger().error(f"Configuration failed: {e}")
-            return TransitionCallbackReturn.FAILURE
+            return TransitionCallbackReturn.ERROR
 
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -147,7 +147,7 @@ class PathNode(LifecycleNode):
 
         except Exception as e:
             self.get_logger().error(f"Activation failed: {e}")
-            return TransitionCallbackReturn.FAILURE
+            return TransitionCallbackReturn.ERROR
 
 
 
@@ -169,7 +169,7 @@ class PathNode(LifecycleNode):
 
         except Exception as e:
             self.get_logger().error(f"Deactivation failed: {e}")
-            return TransitionCallbackReturn.FAILURE
+            return TransitionCallbackReturn.ERROR
 
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -195,7 +195,7 @@ class PathNode(LifecycleNode):
             return TransitionCallbackReturn.SUCCESS
         except Exception as e:
             self.get_logger().error(f"Cleaning failed: {e}")
-            return TransitionCallbackReturn.FAILURE
+            return TransitionCallbackReturn.ERROR
 
 
     def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -218,7 +218,7 @@ class PathNode(LifecycleNode):
             return TransitionCallbackReturn.SUCCESS
         except Exception as e:
             self.get_logger().error(f"Shutdown failed: {e}")
-            return TransitionCallbackReturn.FAILURE
+            return TransitionCallbackReturn.ERROR
 
     
     def track_callback(self, msg):

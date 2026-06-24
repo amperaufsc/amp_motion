@@ -36,7 +36,16 @@ import yaml
 class ControlNode(LifecycleNode):
     def __init__(self):
         super().__init__('control_node')
-        self.get_logger().info('Path Unconfigured. (o_o)')
+
+        self.declare_parameter('Kp', 0.0)
+        self.declare_parameter('Ki', 0.0)
+        self.declare_parameter('Kd', 0.0)
+        self.declare_parameter('Key', 0.0)
+        self.declare_parameter('Keh', 0.0)
+        self.declare_parameter('speed', 0.0)
+        self.declare_parameter('sampling_period', 0.01)
+
+        self.get_logger().info('Control Unconfigured. (o_o)')
         self.subscription_path = None
         self.subscription_odom = None
         self.publisher_ = None
@@ -56,92 +65,124 @@ class ControlNode(LifecycleNode):
     
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Configuring PathNode... (o.o)')
-        self.subscription_path = self.create_subscription(Path, 'path', self.path_callback, 10)
-        self.subscription_odom = self.create_subscription(Odometry, '/fsds/testing_only/odom', self.odom_callback, 10)
+        self.get_logger().info('Configuring Control...')
 
-        # difinição dos parametros que estão no arquivo yaml (control/config/control_parameters.yaml)
-        self.declare_parameter('Kp', 0.0)
-        self.declare_parameter('Ki', 0.0)
-        self.declare_parameter('Kd', 0.0)
-        self.declare_parameter('Key', 0.0)
-        self.declare_parameter('Keh', 0.0)
-        self.declare_parameter('speed', 0.0)
-        self.declare_parameter('sampling_period', 0.01)
+        try:
+            self.subscription_path = self.create_subscription(Path, 'path', self.path_callback, 10)
+            self.subscription_odom = self.create_subscription(Odometry, '/fsds/testing_only/odom', self.odom_callback, 10)
+
+            self.publisher_ = self.create_lifecycle_publisher(ControlCommand, 'control', 10)
+            self.speed_publisher_ = self.create_lifecycle_publisher(Float32, '/speed', 10)
+            self.erro_ant_publisher_ = self.create_lifecycle_publisher(Float32, '/erro_ant', 10)
+            self.eh_publisher_ = self.create_lifecycle_publisher(Float32, '/eh', 10)
+            self.ey_publisher_ = self.create_lifecycle_publisher(Float32, '/ey', 10)
+            self.path_publisher_ = self.create_lifecycle_publisher(Path, 'reference_path', 10)
 
 
-        self.Kp = self.get_parameter('Kp').value
-        self.Ki = self.get_parameter('Ki').value
-        self.Kd = self.get_parameter('Kd').value
-        self.Key = self.get_parameter('Key').value
-        self.Keh = self.get_parameter('Keh').value
-        self.speed = self.get_parameter('speed').value
-        self.T = self.get_parameter('sampling_period').value
+            # difinição dos parametros que estão no arquivo yaml (control/config/control_parameters.yaml)
 
-        self.index = 0
+            self.Kp = self.get_parameter('Kp').value
+            self.Ki = self.get_parameter('Ki').value
+            self.Kd = self.get_parameter('Kd').value
+            self.Key = self.get_parameter('Key').value
+            self.Keh = self.get_parameter('Keh').value
+            self.speed = self.get_parameter('speed').value
+            self.T = self.get_parameter('sampling_period').value
 
-        vehicle_parameters = Vehicle_Parameters(1, np.radians(35), np.radians(-35)) #axle_length - steering_up_limit - steering_down_limit
+            self.index = 0
 
-        kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(self.Key, self.Keh) #lateral error gain - orientation error gain
-        self.control = KLS_Lateral_Motion_Controller(vehicle_parameters, kls_lateral_motion_controller_gains)
-        self.longitudinal_controller = Longitudinal_Controller(self.Kp, self.Ki, self.Kd, self.T, self.speed)
-        #self.PID_Controller = PIDController(Kp, Ki, Kd, T)
-        self.received_path= False
-        self.received_odom = False
-        self.closest_index = 0
+            vehicle_parameters = Vehicle_Parameters(1, np.radians(35), np.radians(-35)) #axle_length - steering_up_limit - steering_down_limit
 
-        return TransitionCallbackReturn.SUCCESS
+            kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(self.Key, self.Keh) #lateral error gain - orientation error gain
+            self.control = KLS_Lateral_Motion_Controller(vehicle_parameters, kls_lateral_motion_controller_gains)
+            self.longitudinal_controller = Longitudinal_Controller(self.Kp, self.Ki, self.Kd, self.T, self.speed)
+            #self.PID_Controller = PIDController(Kp, Ki, Kd, T)
+            self.received_path= False
+            self.received_odom = False
+            self.closest_index = 0
+
+            self.get_logger().info('Control Configured! (o.o)')
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().error(f"Configuration failed: {e}")
+            return TransitionCallbackReturn.ERROR
     
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Activating PathNode... (o‿o)')
+        self.get_logger().info('Activating Control...')
+        try:
+            self.publisher_.on_activate(state)
+            self.speed_publisher_.on_activate(state)
+            self.erro_ant_publisher_.on_activate(state)
+            self.eh_publisher_.on_activate(state)
+            self.ey_publisher_.on_activate(state)
+            self.path_publisher_.on_activate(state)
 
-        self.publisher_ = self.create_lifecycle_publisher(ControlCommand, 'control', 10)
-        self.speed_publisher_ = self.create_lifecycle_publisher(Float32, '/speed', 10)
-        self.erro_ant_publisher_ = self.create_lifecycle_publisher(Float32, '/erro_ant', 10)
-        self.eh_publisher_ = self.create_lifecycle_publisher(Float32, '/eh', 10)
-        self.ey_publisher_ = self.create_lifecycle_publisher(Float32, '/ey', 10)
-        self.path_publisher_ = self.create_lifecycle_publisher(Path, 'reference_path', 10)
+            self.get_logger().info('Control Activated! (o‿o)')
+            self.timer = self.create_timer(float(self.T), self.timer_callback)
+            return super().on_activate(state)
+        except Exception as e:
+            self.get_logger().error(f"Activation failed: {e}")
+            return TransitionCallbackReturn.ERROR
 
-        self.timer = self.create_timer(float(self.T), self.timer_callback)
-
-        return super().on_activate(state)
 
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Deactivating PathNode... (-‿-)')
+        self.get_logger().info('Deactivating Control...')
 
-        if self.timer is not None:
-            self.destroy_timer(self.timer)
-            self.timer = None
+        try:
+            if self.timer is not None:
+                self.destroy_timer(self.timer)
+                self.timer = None
 
-        self._destroy_publishers()
-        return super().on_deactivate(state)
+            self.publisher_.on_deactivate(state)
+            self.speed_publisher_.on_deactivate(state)
+            self.erro_ant_publisher_.on_deactivate(state)
+            self.eh_publisher_.on_deactivate(state)
+            self.ey_publisher_.on_deactivate(state)
+            self.path_publisher_.on_deactivate(state)
+
+            self.get_logger().info('Control Deactivated! (-‿-)')
+            return super().on_deactivate(state)
+        except Exception as e:
+            self.get_logger().error(f"Deactivation failed: {e}")
+            return TransitionCallbackReturn.ERROR
 
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Cleaning up PathNode...(x‿x)')
+        self.get_logger().info('Cleaning up Control...')
+        
+        try:
+            self._destroy_subscriptions()
+            self._destroy_publishers()
 
-        self._destroy_subscriptions()
+            self.received_path = False
+            self.received_odom = False
+            self.closest_index = 0
 
-        self.received_path = False
-        self.received_odom = False
-        self.closest_index = 0
-
-        return TransitionCallbackReturn.SUCCESS
+            self.get_logger().info('Control Cleaned Up! (x‿x)')
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().error(f"Cleaning failed: {e}")
+            return TransitionCallbackReturn.ERROR
 
 
     def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Shutting down PathNode... (x_x)')
+        self.get_logger().info('Shutting down Control...')
 
-        if self.timer is not None:
-            self.destroy_timer(self.timer)
-            self.timer = None
+        try:
+            if self.timer is not None:
+                self.destroy_timer(self.timer)
+                self.timer = None
 
-        self._destroy_publishers()
-        self._destroy_subscriptions()
+            self._destroy_publishers()
+            self._destroy_subscriptions()
 
-        return TransitionCallbackReturn.SUCCESS
+            self.get_logger().info('Control Shutted Down! (x_x)')
+            return TransitionCallbackReturn.SUCCESS
+        except Exception as e:
+            self.get_logger().error(f"Shutdown failed: {e}")
+            return TransitionCallbackReturn.ERROR
 
     
     def path_callback(self, path_msg):
@@ -201,6 +242,11 @@ class ControlNode(LifecycleNode):
             ey_msg.data = ey
 
             if self.received_path:
+                # Evitar erros se o path estiver vazio
+                # TESTAR
+                if len(self.path) == 0:
+                    self.get_logger().warn("Received empty path")
+                    return TransitionCallbackReturn.ERROR
                 #Procurar apenas em uma janela (20) ao redor do último ponto conhecido.
                 start = max(0, self.closest_index - 20) # onde a janela se inicia, não pode ser menor que 0
                 end   = min(len(self.path), self.closest_index + 20) # onde a janela termina, não pode ser maior que o tamanho do path
