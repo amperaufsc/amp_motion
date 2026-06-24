@@ -18,20 +18,21 @@ find_package(fs_msgs REQUIRED)
 
 install(
         PROGRAMS 
-        ros2/path_node_lifecycle.py 
+        ros2/path_node.py 
+        ros2/path_node_life.py
         DESTINATION lib/${PROJECT_NAME}
 )
 
 install(
-       PROGRAMS
+       FILES
        ros2/skidpad.csv
-       DESTINATION lib/${PROJECT_NAME}
+       DESTINATION share/${PROJECT_NAME}/ros2
 )
 
 install(
-       PROGRAMS
+       FILES
        ros2/acceleration.csv
-       DESTINATION lib/${PROJECT_NAME}
+       DESTINATION share/${PROJECT_NAME}/ros2
 )
 
 
