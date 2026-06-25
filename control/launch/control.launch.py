@@ -27,7 +27,7 @@ def generate_launch_description():
 
         Node(
             package='control',
-            executable='control_node.py',
+            executable='control_node_life.py',
             name='control_node',
             namespace= LaunchConfig('namespace'),
             remappings=[('path', LaunchConfig('path')),

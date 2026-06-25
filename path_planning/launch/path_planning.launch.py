@@ -32,7 +32,7 @@ def generate_launch_description():
             
             Node(
                 package='path_planning',
-                executable='path_node.py',
+                executable='path_node_life.py',
                 name='planning_node',
                 namespace=LaunchConfig('namespace'),
                 remappings=[
