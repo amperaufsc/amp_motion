@@ -12,11 +12,11 @@ class SignalsController:
     def steer(self, control):
         self.pwm.ChangeDutyCycle(abs(control))
         if control >= 0:
-            GPIO.output(self.left, False)
-            GPIO.output(self.right, True)  
-        else:
             GPIO.output(self.left, True)
-            GPIO.output(self.right, False)
+            GPIO.output(self.right, False)  
+        else:
+            GPIO.output(self.left, False)
+            GPIO.output(self.right, True)
 
     def shutdown(self):
         GPIO.cleanup()
