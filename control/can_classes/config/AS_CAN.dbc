@@ -94,7 +94,7 @@ BO_ 560 Atuador: 1 Vector__XXX
  SG_ Estercamento_Atuador : 0|8@1+ (1,0) [0|0] "" Vector__XXX
 
 BO_ 528 REF_Estercamento: 8 Vector__XXX
- SG_ Ref_Estercamento_Atuador : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ Ref_Estercamento_Atuador : 0|8@1+ (1,0) [0|255] "" Vector__XXX
 
 BO_ 273 Go_State: 1 Vector__XXX
  SG_ Go_State : 0|8@1+ (1,0) [0|0] "" Vector__XXX
