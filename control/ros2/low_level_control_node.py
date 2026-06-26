@@ -33,16 +33,16 @@ class LowLevelControl(Node):
         self.right = 13
         self.pwm = 18
 
-        self.kp = 75.0
-        self.ki = 0.20
-        self.kd = 0
+        self.t  = 1/50
+        self.kp = 0.75
+        self.ki = 0.0
+        self.kd = 0.0*self.t
         self.k  = 1
-        self.kt = 5.0
-        self.t  = 0.01
+        self.kt = 0.0
         self.max_signal.data = 100.0
         self.min_signal.data = -100.0
-        self.sensor_max = 120.0
-        self.sensor_min = 40.0
+        self.sensor_max = 57.0
+        self.sensor_min = 16.0
 
         self.control_reference = 0
         
@@ -53,9 +53,8 @@ class LowLevelControl(Node):
         
         self.can = StateCanReader()
 
-        self.timer = self.create_timer(1/80, self.timer_callback)
+        self.timer = self.create_timer(1/50, self.timer_callback)
 
-        self.get_logger().info("Funciona")
 
     def control_callback(self, reference: ControlCommand):
         self.control_reference = reference.steering
@@ -75,10 +74,10 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-            if data > 100:
+            if data > 47:
                 limited_control = min(0.0, self.control.data)
                 self.signals.steer(limited_control)
-            elif data < 60:
+            elif data < 26:
                 limited_control = max(0.0, self.control.data)
                 self.signals.steer(limited_control)      
             else:
@@ -92,7 +91,7 @@ class LowLevelControl(Node):
         else:
             self.get_logger().info(f'''
 Control: {self.control.data, self.control_overshoot.data, self.error.data}
-Reference: {self.control_reference}\nSensor: {self.sensor.data}''')
+Reference: {self.control_reference}\nSensor: {self.sensor.data}, {data}''')
         self.sensor = Float32()        
 
 def main(args=None):
