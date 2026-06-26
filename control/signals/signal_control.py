@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import Jetson.GPIO as GPIO
 class SignalsController:
     def __init__(self, left, right, PWM):
         GPIO.setmode(GPIO.BOARD)
