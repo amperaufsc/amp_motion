@@ -57,8 +57,8 @@ class ControlNode(LifecycleNode):
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info('Configuring PathNode... (o.o)')
-        self.subscription_path = self.create_subscription(Path, 'path', self.path_callback, 10)
-        self.subscription_odom = self.create_subscription(Odometry, '/fsds/testing_only/odom', self.odom_callback, 10)
+        self.subscription_path = self.create_subscription(Path, 'path_concatenated', self.path_callback, 10)
+        self.subscription_odom = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
 
         # difinição dos parametros que estão no arquivo yaml (control/config/control_parameters.yaml)
         self.declare_parameter('Kp', 0.0)
@@ -94,7 +94,7 @@ class ControlNode(LifecycleNode):
     
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Activating PathNode... (o‿o)')
+        self.get_logger().info('Activating ControlNode... (o‿o)')
 
         self.publisher_ = self.create_lifecycle_publisher(ControlCommand, 'control', 10)
         self.speed_publisher_ = self.create_lifecycle_publisher(Float32, '/speed', 10)
@@ -109,7 +109,7 @@ class ControlNode(LifecycleNode):
 
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Deactivating PathNode... (-‿-)')
+        self.get_logger().info('Deactivating ControlNode... (-‿-)')
 
         if self.timer is not None:
             self.destroy_timer(self.timer)
@@ -120,7 +120,7 @@ class ControlNode(LifecycleNode):
 
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Cleaning up PathNode...(x‿x)')
+        self.get_logger().info('Cleaning up ControlNode...(x‿x)')
 
         self._destroy_subscriptions()
 
@@ -132,7 +132,7 @@ class ControlNode(LifecycleNode):
 
 
     def on_shutdown(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info('Shutting down PathNode... (x_x)')
+        self.get_logger().info('Shutting down ControlNode... (x_x)')
 
         if self.timer is not None:
             self.destroy_timer(self.timer)

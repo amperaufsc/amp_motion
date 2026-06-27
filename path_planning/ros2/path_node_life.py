@@ -74,8 +74,8 @@ class PathNode(LifecycleNode):
         self.get_logger().info('Configuring PathNode...')
         
         try:
-            self._sub_odom = self.create_subscription(Odometry, '/fsds/testing_only/odom', self.odom_callback, 10)
-            self._sub_track = self.create_subscription(Track, '/fsds/testing_only/track', self.track_callback, 10)
+            self._sub_odom = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+            self._sub_track = self.create_subscription(Track, '/track', self.track_callback, 10)
             self._sub_go = self.create_subscription(GoSignal, '/fsds/signal/go', self.go_callback, 10)
             #Lifecycle publisher pode ser desativado e ativado
             self._publisher_ = self.create_lifecycle_publisher(Path, 'path', 10)
