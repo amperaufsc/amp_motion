@@ -10,7 +10,7 @@ from fs_msgs.msg import GoSignal
 import numpy as np
 from scipy.interpolate import interp1d
 from rclpy.duration import Duration
-from fs_msgs.msg import Track
+from fs_msgs.msg import TrackStampedWithCovariance
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2, PointField
 from bayesian_inference.bayesian_inference_planner import Bayesian_Inference_Planner
@@ -28,7 +28,7 @@ class PathNode(Node):
     def __init__(self):
         super().__init__('path_node')
         self.subscription = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
-        self.subscription = self.create_subscription(Track, 'track', self.track_callback, 10)
+        self.subscription = self.create_subscription(TrackStampedWithCovariance, 'track', self.track_callback, 10)
         self.subscription = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
         self.publisher_ = self.create_publisher(Path, 'path', 10)
         self.publisher_concatenated = self.create_publisher(Path, 'path_concatenated',10)
@@ -79,8 +79,8 @@ class PathNode(Node):
         obstacle_list = []
         self.track_pointcloud_msg = msg
         for cone in msg.track:
-            x = cone.location.x
-            y = cone.location.y
+            x = cone.location.z
+            y = - cone.location.x
             if cone.color == 0:
                 color = 0
                 obstacle = np.array([x, y, 1, color])
@@ -105,6 +105,7 @@ class PathNode(Node):
             self.car_position_y = msg.pose.pose.position.y
             self.position = np.array([self.car_position_x, self.car_position_y])
             self.car_pose = Vehicle_Pose(self.car_position_x, self.car_position_y, self.yaw)
+            self.get_logger().info(f"Car Position: {self.car_position_x}, {self.car_position_y}")
             self.odom_timestamp = msg.header.stamp
             self.odom_time_stamp_float = self.odom_timestamp.sec + self.odom_timestamp.nanosec * 1e-9
             self.odom_msg = msg
@@ -116,7 +117,7 @@ class PathNode(Node):
     def path_publishing(self, np_array_path):
         path_msg = Path()
         path_msg.header.stamp = self.time_stamp
-        path_msg.header.frame_id = "fsds/map"
+        path_msg.header.frame_id = "/map"
         poses = []
         for i, point in enumerate(np_array_path):
             if i >= 1:
@@ -128,7 +129,7 @@ class PathNode(Node):
                 new_time = original_time + dt_duration
                 pose.header.stamp = new_time.to_msg()
                 #pose.header.stamp = path_msg.header.stamp + dt_duration
-                pose.header.frame_id = "fsds/map"
+                pose.header.frame_id = "/map"
                 pose.pose.position.x = point[0]
                 pose.pose.position.y = point[1]
                 poses.append(pose)
@@ -142,7 +143,7 @@ class PathNode(Node):
     def path_publishing_concatenated(self, np_array_path):
         path_msg = Path()
         path_msg.header.stamp = self.time_stamp
-        path_msg.header.frame_id = "fsds/map"
+        path_msg.header.frame_id = "/map"
         poses = []
         for i, point in enumerate(np_array_path):
             if i >= 1:
@@ -154,7 +155,7 @@ class PathNode(Node):
                 new_time = original_time + dt_duration
                 pose.header.stamp = new_time.to_msg()
                 #pose.header.stamp = path_msg.header.stamp + dt_duration
-                pose.header.frame_id = "fsds/map"
+                pose.header.frame_id = "/map"
                 pose.pose.position.x = point[0]
                 pose.pose.position.y = point[1]
                 poses.append(pose)
@@ -245,7 +246,7 @@ class PathNode(Node):
     def track_to_pointcloud(self):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
-        header.frame_id = "/fsds/map"  # Ajuste para o frame de referência correto
+        header.frame_id = "/map"  # Ajuste para o frame de referência correto
 
         points = []
         for cone in self.track_pointcloud_msg.track:  # Supondo que track_msg.tracks é a lista de rastreamentos
