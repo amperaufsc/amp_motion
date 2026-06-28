@@ -17,7 +17,7 @@ class StateCanReader():
 
         filters = [
 
-            {"can_id": 528, "can_mask": 0x7FF, "extended": False},
+            {"can_id": 1185, "can_mask": 0x7FF, "extended": False},
 
         ]
 
@@ -49,7 +49,7 @@ class StateCanReader():
         try:
             match message.arbitration_id:
             
-                case 528:
+                case 1185:
                     for key in ['Ref_Estercamento_Atuador']:
                        if key in can_message:
                            return can_message[key]
