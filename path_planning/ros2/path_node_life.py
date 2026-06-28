@@ -15,6 +15,7 @@ from fs_msgs.msg import GoSignal
 from scipy.interpolate import interp1d
 from rclpy.duration import Duration
 from fs_msgs.msg import Track
+from fs_msgs.msg import TrackStampedWithCovariance
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2, PointField
 from bayesian_inference.bayesian_inference_planner import Bayesian_Inference_Planner
@@ -75,7 +76,7 @@ class PathNode(LifecycleNode):
         
         try:
             self._sub_odom = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
-            self._sub_track = self.create_subscription(Track, '/track', self.track_callback, 10)
+            self._sub_track = self.create_subscription(TrackStampedWithCovariance, '/track', self.track_callback, 10)
             self._sub_go = self.create_subscription(GoSignal, '/fsds/signal/go', self.go_callback, 10)
             #Lifecycle publisher pode ser desativado e ativado
             self._publisher_ = self.create_lifecycle_publisher(Path, 'path', 10)
@@ -237,8 +238,8 @@ class PathNode(LifecycleNode):
         obstacle_list = []
         self.track_pointcloud_msg = msg
         for cone in msg.track:
-            x = cone.location.x
-            y = cone.location.y
+            x = cone.location.z
+            y = - cone.location.x
             if cone.color == 0:
                 color = 0
                 obstacle = np.array([x, y, 1, color])
@@ -276,7 +277,7 @@ class PathNode(LifecycleNode):
     def path_publishing(self, np_array_path):
         path_msg = Path()
         path_msg.header.stamp = self.time_stamp
-        path_msg.header.frame_id = "fsds/map"
+        path_msg.header.frame_id = "/map"
         poses = []
         for i, point in enumerate(np_array_path):
             if i >= 1:
@@ -288,7 +289,7 @@ class PathNode(LifecycleNode):
                 new_time = original_time + dt_duration
                 pose.header.stamp = new_time.to_msg()
                 #pose.header.stamp = path_msg.header.stamp + dt_duration
-                pose.header.frame_id = "fsds/map"
+                pose.header.frame_id = "/map"
                 pose.pose.position.x = point[0]
                 pose.pose.position.y = point[1]
                 poses.append(pose)
@@ -302,7 +303,7 @@ class PathNode(LifecycleNode):
     def path_publishing_concatenated(self, np_array_path):
         path_msg = Path()
         path_msg.header.stamp = self.time_stamp
-        path_msg.header.frame_id = "fsds/map"
+        path_msg.header.frame_id = "/map"
         poses = []
         for i, point in enumerate(np_array_path):
             if i >= 1:
@@ -314,7 +315,7 @@ class PathNode(LifecycleNode):
                 new_time = original_time + dt_duration
                 pose.header.stamp = new_time.to_msg()
                 #pose.header.stamp = path_msg.header.stamp + dt_duration
-                pose.header.frame_id = "fsds/map"
+                pose.header.frame_id = "/map"
                 pose.pose.position.x = point[0]
                 pose.pose.position.y = point[1]
                 poses.append(pose)
@@ -405,7 +406,7 @@ class PathNode(LifecycleNode):
     def track_to_pointcloud(self):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
-        header.frame_id = "/fsds/map"  # Ajuste para o frame de referência correto
+        header.frame_id = "/map"  # Ajuste para o frame de referência correto
 
         points = []
         for cone in self.track_pointcloud_msg.track:  # Supondo que track_msg.tracks é a lista de rastreamentos
