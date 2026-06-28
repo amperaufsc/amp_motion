@@ -37,68 +37,10 @@ BU_:
 
 
 BO_ 1185 REF_Estercamento: 8 Vector__XXX
- SG_ Ref_Estercamento_Atuador : 0|32@1+ (1,0) [0|255] "" Vector__XXX
-
-BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
- SG_ Estercamento_Atuador : 0|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Encoder_Rear_Left : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Encoder_Rear_Right : 0|32@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Encoder_Front_Left : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Encoder_Front_Right : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ RES : 0|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Motor_Input_Power : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Motor_Output_Power : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Inverter_LV_Voltage : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Torque_Mod : 16|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Motor_Torque : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ ACC_Pedal : 32|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Brake_Pedal : 40|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Cebolinha : 48|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Inverter_Temperature : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Inverter_Voltage : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ BMS_Current : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Inverter_Current : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Motor_Temperature : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Motor_RPM : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Task_Mode : 0|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Pressure_T : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Pressure_F : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Pedal_angle : 32|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Steering_angle : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Susp_TE : 48|16@1+ (0.01,0) [0|0] "" Vector__XXX
- SG_ Susp_FD : 32|16@1+ (0.01,0) [0|0] "" Vector__XXX
- SG_ Susp_FE : 16|16@1+ (0.01,0) [0|0] "" Vector__XXX
- SG_ Susp_TD : 0|16@1+ (0.01,0) [0|0] "" Vector__XXX
- SG_ Car_Speed : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Avarage_Temperature : 24|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Max_Temperature : 16|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Battery_Charge : 8|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ State_Health : 0|8@1+ (1,0) [0|0] "" Vector__XXX
- SG_ Ref_Velocidade : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ HV_Voltage : 0|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Protection_Flags : 32|32@1- (1,0) [0|0] "" Vector__XXX
- SG_ Go_State : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Ref_Estercamento_Atuador : 0|32@1- (1,0) [0|255] "" Vector__XXX
 
 
 
 CM_ BO_ 1185 "Referencia Estercamento Atuador.";
-SIG_VALTYPE_ 3221225472 Encoder_Rear_Left : 1;
-SIG_VALTYPE_ 3221225472 Encoder_Front_Left : 1;
-SIG_VALTYPE_ 3221225472 Encoder_Front_Right : 1;
-SIG_VALTYPE_ 3221225472 Motor_Input_Power : 1;
-SIG_VALTYPE_ 3221225472 Motor_Output_Power : 1;
-SIG_VALTYPE_ 3221225472 Inverter_LV_Voltage : 1;
-SIG_VALTYPE_ 3221225472 Motor_Torque : 1;
-SIG_VALTYPE_ 3221225472 Inverter_Temperature : 1;
-SIG_VALTYPE_ 3221225472 Inverter_Voltage : 1;
-SIG_VALTYPE_ 3221225472 BMS_Current : 1;
-SIG_VALTYPE_ 3221225472 Inverter_Current : 1;
-SIG_VALTYPE_ 3221225472 Motor_Temperature : 1;
-SIG_VALTYPE_ 3221225472 Motor_RPM : 1;
-SIG_VALTYPE_ 3221225472 Pressure_T : 1;
-SIG_VALTYPE_ 3221225472 Pressure_F : 1;
-SIG_VALTYPE_ 3221225472 Steering_angle : 1;
-SIG_VALTYPE_ 3221225472 Car_Speed : 1;
-SIG_VALTYPE_ 3221225472 HV_Voltage : 1;
-SIG_VALTYPE_ 3221225472 Protection_Flags : 1;
+SIG_VALTYPE_ 1185 Ref_Estercamento_Atuador : 1;
 
