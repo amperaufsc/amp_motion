@@ -1,14 +1,12 @@
 class PIDController:
 
-    def __init__(self, Kp, Ki, Kd, T, Tt, max_signal=1.0, min_signal=-1.0):
+    def __init__(self, Kp, Ki, Kd, T, max_signal=1.0, min_signal=-1.0):
         self.kp = Kp
         self.ki = Ki
         self.kd = Kd
         self.T = T
-        self.Tt = Tt
         self.D_ant = 0.0
         self.I_ant = 0.0
-        self.Tt_ant = 0.0
         self.erro_ant = 0.0
         self.max_signal = max_signal
         self.min_signal = min_signal
@@ -19,15 +17,9 @@ class PIDController:
         I = self.I_ant + self.ki*self.T*(erro + self.erro_ant)
         D = self.D_ant + self.kd*((erro-self.erro_ant)/self.T)
         sinal_controle = P + I + D
-        if sinal_controle > self.max_signal:
-            Tt = -abs(self.Tt*self.T*(self.max_signal - sinal_controle))
-            I += Tt
-        elif sinal_controle < self.min_signal:
-            Tt = -abs(self.Tt*self.T*(sinal_controle - self.min_signal))
-            I += Tt
         self.erro_ant = erro
         self.I_ant = I
-        self.D_ant = D 
+        self.D_ant = D
 
         if sinal_controle > self.max_signal:
             sinal_controle = self.max_signal
