@@ -14,7 +14,7 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class FloatPublisherLifecycle : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  FloatPublisherLifecycle() : rclcpp_lifecycle::LifecycleNode("float_publisher")
+  FloatPublisherLifecycle() : rclcpp_lifecycle::LifecycleNode("check_lifecyle_node")
 
 
   {
