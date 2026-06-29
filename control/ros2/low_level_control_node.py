@@ -18,7 +18,7 @@ class LowLevelControl(Node):
         self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
         self.pub_control_overshoot = self.create_publisher(Float32, 'control/actual_value', 10)
         self.pub_control = self.create_publisher(Float32, 'control/anti_windup_value', 10)
-        self.pub_control_error = self.create_publisher(Float32, 'control/error', 10)
+        self.pub_control_error   = self.create_publisher(Float32, 'control/error', 10)
         self.pub_min = self.create_publisher(Float32, 'control/min_value', 10)
         self.pub_max = self.create_publisher(Float32, 'control/max_value', 10)
 
@@ -41,8 +41,8 @@ class LowLevelControl(Node):
         self.kt = 0.0
         self.max_signal.data = 100.0
         self.min_signal.data = -100.0
-        self.sensor_max = 57.0
-        self.sensor_min = 16.0
+        self.sensor_max = 23000.0
+        self.sensor_min = 17000.0
 
         self.control_reference = 0
         
@@ -62,7 +62,7 @@ class LowLevelControl(Node):
     def timer_callback(self):
         try:
             message = self.can.can_listener.read_message()
-            data = self.can.can_reader(message)                
+            data = self.can.can_reader(message)/10             
             self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
             
             self.control_overshoot.data, self.control.data, self.error.data = self.pid.update_signal(self.control_reference, self.sensor.data)
@@ -81,13 +81,12 @@ class LowLevelControl(Node):
                 limited_control = max(0.0, self.control.data)
                 self.signals.steer(limited_control)      
             else:
-                self.signals.steer(self.control.data)
-                
+                self.signals.steer(self.control.data)               
                 
         except Exception as e:
             self.get_logger().info(f"{e}")
-        if message == None:
-            self.signals.steer(0)
+            if message == None:
+                self.signals.steer(0)
         else:
             self.get_logger().info(f'''
 Control: {self.control.data, self.control_overshoot.data, self.error.data}
