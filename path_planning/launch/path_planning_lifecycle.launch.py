@@ -17,9 +17,11 @@ def generate_launch_description():
 
         remappings=[
             ('path', LaunchConfig('path')),
+            ('path_concatenated', LaunchConfig('path_concatenated')),
             ('odom', LaunchConfig('odom')),
             ('go', LaunchConfig('go')),
-            ('track', LaunchConfig('track'))
+            ('track', LaunchConfig('track')),
+            ('track_pointcloud', LaunchConfig('track_pointcloud'))
         ],
 
         parameters=[
@@ -41,9 +43,12 @@ def generate_launch_description():
 
         LaunchArg('namespace', default_value='path'),
         LaunchArg('path', default_value='path'),
-        LaunchArg('odom', default_value='/odom'),
-        LaunchArg('track', default_value='/track'),
-        LaunchArg('go', default_value='go'),
+        LaunchArg('path_concatenated', default_value='path_concatenated'),
+        LaunchArg('track_pointcloud', default_value='track_pointcloud'),
+
+        LaunchArg('odom', default_value='odom'),
+        LaunchArg('track', default_value='track'),
+        LaunchArg('go', default_value='/AGORAVOCEVAICORNO'),
 
         LaunchArg('max_angle_change_gain', default_value='5.0'),
         LaunchArg('std_dvt_track_width_gain', default_value='0.0'),

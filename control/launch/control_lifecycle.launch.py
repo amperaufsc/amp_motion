@@ -22,7 +22,7 @@ def generate_launch_description():
         output='screen',
 
         remappings=[
-            ('path', LaunchConfig('path')),
+            ('path_concatenated', LaunchConfig('path_concatenated')),
             ('odom', LaunchConfig('odom')),
             ('control', LaunchConfig('control'))
         ],
@@ -53,6 +53,12 @@ def generate_launch_description():
         LaunchArg(
             'control',
             default_value='control',
+            description='Control message topic'
+        ),
+
+        LaunchArg(
+            'path_concatenated',
+            default_value='path_concatenated',
             description='Control message topic'
         ),
 

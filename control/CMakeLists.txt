@@ -14,10 +14,14 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(fs_msgs REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 add_executable(check_node ros2/check_node.cpp)
+add_executable(check_lifecycle_node ros2/check_lifecycle_node.cpp)
+
 ament_target_dependencies(check_node
   rclcpp
   std_msgs
@@ -25,7 +29,19 @@ ament_target_dependencies(check_node
   lifecycle_msgs
 )
 
+ament_target_dependencies(check_lifecycle_node
+  rclcpp_lifecycle
+  rclcpp
+  std_msgs
+  fs_msgs
+  lifecycle_msgs
+)
+
 install(TARGETS check_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS check_lifecycle_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
