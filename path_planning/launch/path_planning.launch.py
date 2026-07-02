@@ -15,7 +15,7 @@ def generate_launch_description():
             LaunchArg('path', default_value=['path'], description='path msg'),
             LaunchArg('odom', default_value=['/orbslam/odom'], description='odom msg'),
             LaunchArg('track_pub', default_value=['track'], description='track msg'),
-            LaunchArg('go', default_value=['/as_amp/mission_select/go'], description='go msg'),
+            LaunchArg('go', default_value=['go'], description='go msg'),
             LaunchArg('max_angle_change_gain', default_value=['5.0'], description='max_angle_change_gain msg'),
             LaunchArg('std_dvt_track_width_gain', default_value=['0.0'], description='std_dvt_track_width_gain msg'),
             LaunchArg('std_dvt_left_right_cones', default_value=['0.0'], description='std_dvt_left_right_cones msg'),

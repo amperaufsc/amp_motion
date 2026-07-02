@@ -22,7 +22,7 @@ def generate_launch_description():
         output='screen',
 
         remappings=[
-            ('path_concatenated', LaunchConfig('path_concatenated')),
+            ('path', LaunchConfig('path')),
             ('odom', LaunchConfig('odom')),
             ('control', LaunchConfig('control'))
         ],
@@ -40,25 +40,19 @@ def generate_launch_description():
 
         LaunchArg(
             'path',
-            default_value='/path',
+            default_value='/path_concatenated',
             description='Path message topic'
         ),
 
         LaunchArg(
             'odom',
-            default_value='/odom',
+            default_value='/orbslam/odom',
             description='Odom message topic'
         ),
 
         LaunchArg(
             'control',
             default_value='control',
-            description='Control message topic'
-        ),
-
-        LaunchArg(
-            'path_concatenated',
-            default_value='path_concatenated',
             description='Control message topic'
         ),
 

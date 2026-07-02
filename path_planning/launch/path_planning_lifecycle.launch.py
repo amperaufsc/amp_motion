@@ -11,7 +11,7 @@ def generate_launch_description():
     planning_node = LifecycleNode(
         package='path_planning',
         executable='path_node_life.py',
-        name='planning_node',
+        name='path_node',
         namespace=LaunchConfig('namespace'),
         output='screen',
 
@@ -46,9 +46,9 @@ def generate_launch_description():
         LaunchArg('path_concatenated', default_value='path_concatenated'),
         LaunchArg('track_pointcloud', default_value='track_pointcloud'),
 
-        LaunchArg('odom', default_value='odom'),
+        LaunchArg('odom', default_value='/orbslam/odom'),
         LaunchArg('track', default_value='track'),
-        LaunchArg('go', default_value='/AGORAVOCEVAICORNO'),
+        LaunchArg('go', default_value='go'),
 
         LaunchArg('max_angle_change_gain', default_value='5.0'),
         LaunchArg('std_dvt_track_width_gain', default_value='0.0'),

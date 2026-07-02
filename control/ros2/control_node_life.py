@@ -57,7 +57,7 @@ class ControlNode(LifecycleNode):
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info('Configuring PathNode... (o.o)')
-        self.subscription_path = self.create_subscription(Path, 'path_concatenated', self.path_callback, 10)
+        self.subscription_path = self.create_subscription(Path, 'path', self.path_callback, 10)
         self.subscription_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
 
         # difinição dos parametros que estão no arquivo yaml (control/config/control_parameters.yaml)
