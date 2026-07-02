@@ -7,7 +7,7 @@ from rclpy.node import Node
 from fs_msgs.msg import ControlCommand
 from std_msgs.msg import Float32
 from signals.signal_control import SignalsController
-from longitudinal_control.PIDT_controller import PIDController
+from longitudinal_control.PD_controller import PDController
 
 
 class LowLevelControl(Node):
@@ -33,14 +33,11 @@ class LowLevelControl(Node):
         self.right = 13
         self.pwm = 18
 
-        self.t  = 1/50
+        self.ts  = 1/50
         self.kp = 0.75
-        self.ki = 0.0
         self.kd = 0.0*self.t
-        self.k  = 1
-        self.kt = 0.0
-        self.max_signal.data = 17.0
-        self.min_signal.data = -17.0
+        self.max_signal.data = 30.0
+        self.min_signal.data = -30.0
         self.sensor_max = 23000.0
         self.sensor_min = 17000.0
 
@@ -48,8 +45,8 @@ class LowLevelControl(Node):
         
         self.signals = SignalsController(self.left, self.right, self.pwm)
  
-        self.pid = PIDController(
-            self.kp, self.ki, self.kd, self.t, self.kt, self.max_signal.data, self.min_signal.data)   
+        self.pid = PDController(
+            self.kp, self.kd, self.ts, self.max_signal.data, self.min_signal.data)   
         
         self.can = StateCanReader()
 
