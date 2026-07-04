@@ -17,7 +17,7 @@ class PIDController:
         erro = reference - measure
         P = self.kp*erro
         I = self.I_ant + self.ki*self.T*(erro + self.erro_ant)
-        D = self.D_ant + self.kd*((erro-self.erro_ant)/self.T)
+        D = self.kd*((erro-self.erro_ant)/self.T)
         sinal_controle = P + I + D
         if sinal_controle >= self.max_signal:
             Tt = (self.Tt*self.T*(self.max_signal - sinal_controle))
