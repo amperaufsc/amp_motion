@@ -39,8 +39,8 @@ class LowLevelControl(Node):
         self.kd = 0.05*self.ts
         self.max_signal.data = 30.0
         self.min_signal.data = -30.0
-        self.sensor_max = 23000.0
-        self.sensor_min = 17000.0
+        self.sensor_max = 19500.0
+        self.sensor_min = 9500.0
 
         self.control_reference = 0
         
@@ -72,15 +72,14 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-         #  if data > 23000:
-         #       limited_control = min(0.0, self.control.data)
-         #       self.signals.steer(limited_control)
-         #   elif data < 17000:
-         #       limited_control = max(0.0, self.control.data)
-         #       self.signals.steer(limited_control)      
-         #   else:
-         #       self.signals.steer(self.control.data)            
-            self.signals.steer(-20)
+           if data > 23000:
+                limited_control = min(0.0, self.control.data)
+                self.signals.steer(limited_control)
+            elif data < 17000:
+                limited_control = max(0.0, self.control.data)
+                self.signals.steer(limited_control)      
+            else:
+                self.signals.steer(self.control.data)            
                 
         except Exception as e:
             self.get_logger().info(f"{e}")
