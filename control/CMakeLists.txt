@@ -93,7 +93,7 @@ install(
         DESTINATION share/${PROJECT_NAME}
 )
 
-intall(
+install(
         DIRECTORY
         signals
         DESTINATION lib/${PROJECT_NAME} 
