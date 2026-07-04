@@ -8,6 +8,7 @@ from fs_msgs.msg import ControlCommand
 from std_msgs.msg import Float32
 from signals.signal_control import SignalsController
 from longitudinal_control.PIDT_controller import PIDController
+from longitudinal_control.PD_controller import PDController
 
 
 class LowLevelControl(Node):
@@ -45,8 +46,8 @@ class LowLevelControl(Node):
         
         self.signals = SignalsController(self.left, self.right, self.pwm)
  
-        self.pid = PIDController(
-            self.kp, 0, self.kd, self.ts,0, self.max_signal.data, self.min_signal.data)   
+        self.pd = PDController(
+            self.kp, self.kd, self.ts, self.max_signal.data, self.min_signal.data)   
         
         self.can = StateCanReader()
 
@@ -62,7 +63,7 @@ class LowLevelControl(Node):
             data = self.can.can_reader(message)/10             
             self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
             
-            self.control_overshoot.data, self.control.data, self.error.data = self.pid.update_signal(self.control_reference, self.sensor.data)
+            self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_reference, self.sensor.data)
 
             self.pub_sensor.publish(self.sensor)
             self.pub_control.publish(self.control)
@@ -71,14 +72,14 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-            if data > 23000:
-                limited_control = min(0.0, self.control.data)
-                self.signals.steer(limited_control)
-            elif data < 17000:
-                limited_control = max(0.0, self.control.data)
-                self.signals.steer(limited_control)      
-            else:
-                self.signals.steer(self.control.data)            
+         #  if data > 23000:
+         #       limited_control = min(0.0, self.control.data)
+         #       self.signals.steer(limited_control)
+         #   elif data < 17000:
+         #       limited_control = max(0.0, self.control.data)
+         #       self.signals.steer(limited_control)      
+         #   else:
+         #       self.signals.steer(self.control.data)            
             self.signals.steer(-20)
                 
         except Exception as e:
