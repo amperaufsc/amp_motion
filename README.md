@@ -94,6 +94,11 @@ If it is not possible to transition to the desired state from the current state,
 
 ```bash
     ros2 launch path_planning path_lifecycle.launch.py
+    ros2 run path_planning path_node.py
+   ```
+
+```bash
+    ros2 launch path_planning path_planning.launch.py
    ```
 
 ### Control launchs: 
@@ -104,4 +109,9 @@ If it is not possible to transition to the desired state from the current state,
 
 ```bash
     ros2 launch control control_lifecycle.launch.py
+    ros2 run control control_node.py
+   ```
+
+```bash
+    ros2 launch control control.launch.py
    ```

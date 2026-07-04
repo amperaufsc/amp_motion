@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/ampera/ws/install/yolov8_msgs/include/**",
+        "/home/ampera/ws/install/slam_toolbox/include/**",
+        "/home/ampera/ws/install/pointcloud_to_laserscan/include/**",
+        "/home/ampera/ws/install/ouster_ros/include/**",
+        "/home/ampera/ws/install/ouster_sensor_msgs/include/**",
+        "/home/ampera/ws/install/can_bus/include/**",
+        "/home/ampera/ws/install/fs_msgs/include/**",
+        "/home/ampera/ws/install/depthai_ros_driver/include/**",
+        "/home/ampera/ws/install/depthai_bridge/include/**",
+        "/home/ampera/ws/install/depthai_ros_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/ampera/ws_amp/src/amp_motion/control/include/**",
+        "include/**",
+        "/usr/include/**"
+      ],
+      "name": "ros2",
+      "intelliSenseMode": "gcc-arm64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}
