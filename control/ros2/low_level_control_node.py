@@ -60,7 +60,8 @@ class LowLevelControl(Node):
     def timer_callback(self):
         try:
             message = self.can.can_listener.read_message()
-            data = self.can.can_reader(message)/10             
+            data = self.can.can_reader(message)/10    
+            data = 0.0         
             self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
             
             self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_reference, self.sensor.data)
@@ -80,7 +81,7 @@ class LowLevelControl(Node):
                 self.signals.steer(limited_control)      
             else:
                 self.signals.steer(self.control.data)            
-                
+                     
         except Exception as e:
             self.get_logger().info(f"{e}")
             if message == None:
