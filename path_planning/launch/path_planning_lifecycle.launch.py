@@ -41,14 +41,14 @@ def generate_launch_description():
 
     return LaunchDescription([
 
-        LaunchArg('namespace', default_value='path'),
+        LaunchArg('namespace', default_value=''),
         LaunchArg('path', default_value='path'),
         LaunchArg('path_concatenated', default_value='path_concatenated'),
         LaunchArg('track_pointcloud', default_value='track_pointcloud'),
 
         LaunchArg('odom', default_value='/orbslam/odom'),
         LaunchArg('track', default_value='track'),
-        LaunchArg('go', default_value='go'),
+        LaunchArg('go', default_value='/as_amp/mission_selected/go'),
 
         LaunchArg('max_angle_change_gain', default_value='5.0'),
         LaunchArg('std_dvt_track_width_gain', default_value='0.0'),

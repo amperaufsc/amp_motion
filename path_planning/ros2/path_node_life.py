@@ -327,80 +327,86 @@ class PathNode(LifecycleNode):
 
 
     def timer_callback(self):
-        if self.track_received:
-                pointcloud=self.track_to_pointcloud()
-                self._publisher_pointcloud.publish(pointcloud)
-        else:
-            self.get_logger().info('Track not Received')
+        try:
+            if self.track_received:
+                    pointcloud=self.track_to_pointcloud()
+                    self._publisher_pointcloud.publish(pointcloud)
+            else:
+                self.get_logger().info('Track not Received')
+                    
+            if self.go_msg.mission == "trackdrive" and self.track_received:
+                self.get_logger().info('oi')
+
+                self.local_cones = []
+                for cone in self.obstacle_numpy_array:
+                    if np.linalg.norm(cone[:2] - self.position) <= 20:
+                        self.local_cones.append(cone)    
+
+                self.obstacle_global_array = np.array(self.local_cones)
                 
-        if self.go_msg.mission == "trackdrive" and self.track_received:
-            self.get_logger().info('oi')
+                obstacle_global_array = np.array(self.obstacle_numpy_array)
 
-            self.local_cones = []
-            for cone in self.obstacle_numpy_array:
-                if np.linalg.norm(cone[:2] - self.position) <= 20:
-                    self.local_cones.append(cone)    
-
-            self.obstacle_global_array = np.array(self.local_cones)
-            
-            obstacle_global_array = np.array(self.obstacle_numpy_array)
-
-            self.get_logger().info('cones: "%s"' %self.obstacle_global_array[:2])
-            np_array_path,np_array_path_concatenated = self.planner.get_interpolated_path(self.obstacle_numpy_array, self.car_pose)
-            
-            self.path_publishing(np_array_path)
-            self.path_publishing_concatenated(np_array_path_concatenated)
-            self.get_logger().info('Waypoints')
-    
-
-        if self.go_msg.mission == "acceleration":
-            first_position = np.array([0, 0])
-            final_position = np.array([75, 0])
-            path = np.array([first_position, final_position])
-            distance = np.cumsum( np.sqrt(np.sum( np.diff(path, axis=0)**2, axis=1 )))
-            distance = np.insert(distance, 0, 0)/distance[-1]
-            interpolator =  interp1d(distance, path, kind="slinear", axis=0)
-            self.path_publishing(interpolator(np.linspace(0,1,50)))
+                self.get_logger().info('cones: "%s"' %self.obstacle_global_array[:2])
+                np_array_path,np_array_path_concatenated = self.planner.get_interpolated_path(self.obstacle_numpy_array, self.car_pose)
                 
-        if self.go_msg.mission == "brake-test":
-            first_position = np.array([0, 0])
-            final_position = np.array([75, 0])
-            path = np.array([first_position, final_position])
-            distance = np.cumsum( np.sqrt(np.sum( np.diff(path, axis=0)**2, axis=1 )) )
-            distance = np.insert(distance, 0, 0)/distance[-1]
-            interpolator =  interp1d(distance, path, kind="slinear", axis=0)
-            self.path_publishing(interpolator(np.linspace(0,1,100)))
-          
-        if self.go_msg.mission == "skidpad":
-            self.get_logger().info('skidpad received')
-
-            pkg_share_dir = get_package_share_directory('path_planning')
-
-            skidpad_csv_path = os.path.join(pkg_share_dir, 'ros2', 'skidpad.csv')
-
-            path = np.genfromtxt(skidpad_csv_path,
-                               delimiter = ';',
-                               skip_header = 1,
-                               dtype = float,
-                               invalid_raise = False)
-            
-          
-            path = [sublist[::-1] for sublist in path]
-            for sublist in path:
-                sublist[1] *= -1
-            skidpad_path = path + np.array([15, 0])
-            distance = np.cumsum(np.sqrt(np.sum( np.diff(skidpad_path, axis=0)**2, axis=1 )) )
-            distance = np.insert(distance, 0, 0)/distance[-1]
-            interpolator =  interp1d(distance, skidpad_path, kind="slinear", axis=0)
-            self.path_publishing(interpolator(np.linspace(0, 1, 100)))
-            
+                self.path_publishing(np_array_path)
+                self.path_publishing_concatenated(np_array_path_concatenated)
+                self.get_logger().info('Waypoints')
         
-        if self.go_msg.mission == "auto-cross":
-            waypoints = self.planner.get_waypoints(self.obstacle_numpy_array, self.car_pose)
-            np_array_path = self.planner.get_interpolated_path(self.obstacle_numpy_array, waypoints[-1])
+
+            if self.go_msg.mission == "acceleration":
+                first_position = np.array([0, 0])
+                final_position = np.array([75, 0])
+                path = np.array([first_position, final_position])
+                distance = np.cumsum( np.sqrt(np.sum( np.diff(path, axis=0)**2, axis=1 )))
+                distance = np.insert(distance, 0, 0)/distance[-1]
+                interpolator =  interp1d(distance, path, kind="slinear", axis=0)
+                self.path_publishing(interpolator(np.linspace(0,1,50)))
+                    
+            if self.go_msg.mission == "brake-test":
+                first_position = np.array([0, 0])
+                final_position = np.array([75, 0])
+                path = np.array([first_position, final_position])
+                distance = np.cumsum( np.sqrt(np.sum( np.diff(path, axis=0)**2, axis=1 )) )
+                distance = np.insert(distance, 0, 0)/distance[-1]
+                interpolator =  interp1d(distance, path, kind="slinear", axis=0)
+                self.path_publishing(interpolator(np.linspace(0,1,100)))
             
-            np_array_path = self.planner.get_interpolated_path(self.obstacle_numpy_array, waypoints[-1])
-            self.path_publishing(np_array_path)
+            if self.go_msg.mission == "skidpad":
+                self.get_logger().info('skidpad received')
+
+                pkg_share_dir = get_package_share_directory('path_planning')
+
+                skidpad_csv_path = os.path.join(pkg_share_dir, 'ros2', 'skidpad.csv')
+
+                path = np.genfromtxt(skidpad_csv_path,
+                                delimiter = ';',
+                                skip_header = 1,
+                                dtype = float,
+                                invalid_raise = False)
+                
+            
+                path = [sublist[::-1] for sublist in path]
+                for sublist in path:
+                    sublist[1] *= -1
+                skidpad_path = path + np.array([15, 0])
+                distance = np.cumsum(np.sqrt(np.sum( np.diff(skidpad_path, axis=0)**2, axis=1 )) )
+                distance = np.insert(distance, 0, 0)/distance[-1]
+                interpolator =  interp1d(distance, skidpad_path, kind="slinear", axis=0)
+                self.path_publishing(interpolator(np.linspace(0, 1, 100)))
+                
+            
+            if self.go_msg.mission == "auto-cross":
+                waypoints = self.planner.get_waypoints(self.obstacle_numpy_array, self.car_pose)
+                np_array_path = self.planner.get_interpolated_path(self.obstacle_numpy_array, waypoints[-1])
+                
+                np_array_path = self.planner.get_interpolated_path(self.obstacle_numpy_array, waypoints[-1])
+                self.path_publishing(np_array_path)
+
+        except Exception as e:
+            self.get_logger().error(f"Cleaning failed: {e}")
+            #return TransitionCallbackReturn.FAILURE
+            return TransitionCallbackReturn.ERROR
 
 
     def track_to_pointcloud(self):
