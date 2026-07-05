@@ -35,11 +35,12 @@ class LowLevelControl(Node):
         self.pwm = 18
 
         self.ts  = 1/50
-        self.kp = 0.75
+        self.kp = 0.26
         self.kd = 0.05*self.ts
-        self.max_signal.data = 30.0
-        self.min_signal.data = -30.0
-        self.sensor_max = 20000.0
+        self.bias = 12.0
+        self.max_signal.data = 60.0
+        self.min_signal.data = -60.0
+        self.sensor_max = 18800.0
         self.sensor_min = 9000.0
 
         self.control_setPoint = 0
@@ -47,7 +48,7 @@ class LowLevelControl(Node):
         self.signals = SignalsController(self.left, self.right, self.pwm)
  
         self.pd = PDController(
-            self.kp, self.kd, self.ts, self.max_signal.data, self.min_signal.data)   
+            self.kp, self.kd, self.ts, self.bias, self.max_signal.data, self.min_signal.data)   
         
         self.can = StateCanReader()
 
@@ -72,10 +73,10 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-            if data > 20000:
+            if data > (self.sensor_max -300):
                 limited_control = min(0.0, self.control.data)
                 self.signals.steer(limited_control)
-            elif data < 9000:
+            elif data < (self.sensor_min +300):
                 limited_control = max(0.0, self.control.data)
                 self.signals.steer(limited_control)      
             else:
