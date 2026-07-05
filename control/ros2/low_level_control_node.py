@@ -32,16 +32,17 @@ class LowLevelControl(Node):
         
         self.left = 15
         self.right = 13
-        self.pwm = 18
+       s self.pwm = 18
 
         self.ts  = 1/50
         self.kp = 0.26
         self.kd = 0.05*self.ts
-        self.bias = 12.0
-        self.max_signal.data = 60.0
-        self.min_signal.data = -60.0
-        self.sensor_max = 18800.0
-        self.sensor_min = 9000.0
+        self.bias = 12.0                #valor do bias
+        self.max_signal.data = 60.0     #limite superior do saturador
+        self.min_signal.data = -60.0    #limite inferior do saturador
+        self.sensor_max = 18800.0       #max é na esquerda
+        self.sensor_min = 9000.0        #min é na direita
+        #Quando o sinal de controle for positivo, as rodas esterçam para a esquerda do piloto
 
         self.control_setPoint = 0
         
