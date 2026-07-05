@@ -13,7 +13,7 @@ class PDController:
         P = self.kp*erro
         D = -self.kd*(measure - self.previous_measure)/self.ts
         self.previous_measure = measure
-        sinal_controle = P + D
+        sinal_controle = (P + D)
 
         sinal_controle_limitado = max(self.min_signal, min(sinal_controle, self.max_signal) )
         

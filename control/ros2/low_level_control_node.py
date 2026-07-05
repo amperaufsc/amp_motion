@@ -39,10 +39,10 @@ class LowLevelControl(Node):
         self.kd = 0.05*self.ts
         self.max_signal.data = 30.0
         self.min_signal.data = -30.0
-        self.sensor_max = 19500.0
-        self.sensor_min = 9500.0
+        self.sensor_max = 20000.0
+        self.sensor_min = 9000.0
 
-        self.control_reference = 0
+        self.control_setPoint = 0
         
         self.signals = SignalsController(self.left, self.right, self.pwm)
  
@@ -54,16 +54,16 @@ class LowLevelControl(Node):
         self.timer = self.create_timer(1/50, self.timer_callback)
 
 
-    def control_callback(self, reference: ControlCommand):
-        self.control_reference = reference.steering
+    def control_callback(self, setPoint: ControlCommand):
+        self.control_setPoint = setPoint.steering
                 
     def timer_callback(self):
         try:
             message = self.can.can_listener.read_message()
-            data = self.can.can_reader(message)/10             
+            data = self.can.can_reader(message)/10        
             self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
             
-            self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_reference, self.sensor.data)
+            self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_setPoint, self.sensor.data)
 
             self.pub_sensor.publish(self.sensor)
             self.pub_control.publish(self.control)
@@ -72,15 +72,15 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-           if data > 23000:
+            if data > 20000:
                 limited_control = min(0.0, self.control.data)
                 self.signals.steer(limited_control)
-            elif data < 17000:
+            elif data < 9000:
                 limited_control = max(0.0, self.control.data)
                 self.signals.steer(limited_control)      
             else:
-                self.signals.steer(self.control.data)            
-                
+                self.signals.steer(self.control.data)           
+            self.signals.steer(-17)
         except Exception as e:
             self.get_logger().info(f"{e}")
             if message == None:
@@ -88,7 +88,7 @@ class LowLevelControl(Node):
         else:
             self.get_logger().info(f'''
 Control: {self.control.data, self.control_overshoot.data, self.error.data}
-Reference: {self.control_reference}\nSensor: {self.sensor.data}, {data}''')
+setPoint: {self.control_setPoint}\nSensor: {self.sensor.data}, {data}''')
         self.sensor = Float32()        
 
 def main(args=None):
