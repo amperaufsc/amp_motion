@@ -7,16 +7,24 @@ from launch.actions import ExecuteProcess
 from launch.actions import DeclareLaunchArgument as LaunchArg
 from launch.actions import ExecuteProcess
 from launch.substitutions import LaunchConfiguration as LaunchConfig
+from ament_index_python.packages import get_package_share_directory
+import os
 
 
 def generate_launch_description():
+
+    parameters_file = os.path.join(
+        get_package_share_directory('control'),
+        'config',
+        'control_parameters.yaml'
+    )
 
     return LaunchDescription([
         LaunchArg('namespace', default_value=['control'], description='Namespace for node'),
         LaunchArg('path', default_value=['/path'], description='Path message topic'),
         LaunchArg('odom', default_value=['/odom'], description='Odom message topic'),
         LaunchArg('control', default_value=['control'], description='Control message topic'),
-        LaunchArg('T', default_value=['0.01'], description='Sampling period'),
+
         Node(
             package='control',
             executable='control_node.py',
@@ -25,6 +33,8 @@ def generate_launch_description():
             remappings=[('path', LaunchConfig('path')),
                         ('odom', LaunchConfig('odom')),
                         ('control', LaunchConfig('control'))],
-            parameters=[{'T': LaunchConfig('T')}]
+            parameters=[parameters_file],
         )
+    
     ])
+
