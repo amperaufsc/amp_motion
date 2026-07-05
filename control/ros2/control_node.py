@@ -17,7 +17,6 @@ from longitudinal_control.longitudinal_controller import Longitudinal_Controller
 from longitudinal_control.PID_controller import PIDController
 import yaml
 
-
 class ControlNode(Node):
     def __init__(self):
         super().__init__('control_node')

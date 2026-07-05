@@ -21,7 +21,7 @@ private:
     RCLCPP_INFO(this->get_logger(), "Publicando throttle: %f", msg.throttle);
     RCLCPP_INFO(this->get_logger(), "Publicando steering: %f", msg.steering);
     publisher_->publish(msg);
-    if (steering_counter >= 10*3){
+    if (steering_counter >= 10*0.4){
       msg.steering += variacao_steering;
       steering_counter = -1;
     };
@@ -46,7 +46,7 @@ private:
   int count = 0;
   int steering_counter = 0;
   fs_msgs::msg::ControlCommand msg;
-  float variacao_steering = 200.0;
+  float variacao_steering = 10.0;
   float variacao_throttle = 50.0;
 };
 
