@@ -80,7 +80,6 @@ class LowLevelControl(Node):
                 self.signals.steer(limited_control)      
             else:
                 self.signals.steer(self.control.data)           
-            self.signals.steer(-17)
         except Exception as e:
             self.get_logger().info(f"{e}")
             if message == None:
