@@ -47,11 +47,6 @@ install(
         DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-        PROGRAMS 
-        ros2/low_level_control_node_sim.py
-        DESTINATION lib/${PROJECT_NAME}
-)
 
 install(
         DIRECTORY
