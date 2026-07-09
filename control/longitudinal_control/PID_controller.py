@@ -5,16 +5,20 @@ class PIDContsroller:
         self.ki = ki
         self.kd = kd
         self.ts = ts
+        self.tau = 50*ts
         self.Ka = Ka
         self.u = 0.0
-        self.Ka_ant = 0.0
         self.error = [0, 0]
+        self.filtered_measure[0, 0]
         self.maxSignal = maxSignal
         self.minSignal = minSignal
 
     def updatse_signal (self, reference, measure):
         self.error[0] = reference - measure
-        self.u = self.u + self.kp*self.error[0] + self.ki*self.ts[self.error] -self.kp*self.error[1] -self.kd*(measure- self.measure)
+
+        self.filtered_measure[0] = self.measure*self.ts/self.tau + self.filtered_measure[1]*(1-self.ts)/self.tau
+
+        self.u = self.u + self.kp*self.error[0] + self.ki*self.ts[self.error] -self.kp*self.error[1] -self.kd*(self.filtered_measure[0]- self.filtered_measure[1])
 
 
         self.error[1] = self.error[0]
