@@ -32,7 +32,7 @@ class LowLevelControl(Node):
         
         self.left = 15
         self.right = 13
-       s self.pwm = 18
+        self.pwm = 18
 
         self.ts  = 1/50
         self.kp = 0.26
