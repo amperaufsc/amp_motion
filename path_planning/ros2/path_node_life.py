@@ -238,8 +238,8 @@ class PathNode(LifecycleNode):
         obstacle_list = []
         self.track_pointcloud_msg = msg
         for cone in msg.track:
-            x = cone.location.z
-            y = - cone.location.x
+            x = cone.location.x
+            y = cone.location.y
             if cone.color == 0:
                 color = 0
                 obstacle = np.array([x, y, 1, color])

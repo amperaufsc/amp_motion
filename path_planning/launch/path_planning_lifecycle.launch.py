@@ -47,7 +47,7 @@ def generate_launch_description():
         LaunchArg('track_pointcloud', default_value='track_pointcloud'),
 
         LaunchArg('odom', default_value='/orbslam/odom'),
-        LaunchArg('track', default_value='track'),
+        LaunchArg('track', default_value='/mapper/track'),
         LaunchArg('go', default_value='/as_amp/mission_selected/go'),
 
         LaunchArg('max_angle_change_gain', default_value='5.0'),
@@ -64,7 +64,7 @@ def generate_launch_description():
         LaunchArg('max_speed', default_value='2.5'),
 
         LaunchArg('track_pointcloud', default_value='track_pointcloud'),
-        LaunchArg('frame_id', default_value='fsds/map'),
+        LaunchArg('frame_id', default_value='/map'),
 
         planning_node,
     ])
