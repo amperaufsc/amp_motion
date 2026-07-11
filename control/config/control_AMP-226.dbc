@@ -37,7 +37,7 @@ BU_:
 
 
 BO_ 1185 REF_Estercamento: 4 Vector__XXX
- SG_ Ref_Estercamento_Atuador : 0|32@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Ref_Estercamento_Atuador : 0|8@1+ (1,0) [0|0] "" Vector__XXX
 
 
 
