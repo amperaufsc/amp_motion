@@ -15,7 +15,6 @@ from fs_msgs.msg import GoSignal
 from scipy.interpolate import interp1d
 from rclpy.duration import Duration
 from fs_msgs.msg import Track
-from fs_msgs.msg import TrackStampedWithCovariance
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2, PointField
 from bayesian_inference.bayesian_inference_planner import Bayesian_Inference_Planner
@@ -76,7 +75,7 @@ class PathNode(LifecycleNode):
         
         try:
             self._sub_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
-            self._sub_track = self.create_subscription(TrackStampedWithCovariance, 'track', self.track_callback, 10)
+            self._sub_track = self.create_subscription(Track, '/mapper/track', self.track_callback, 10)
             self._sub_go = self.create_subscription(GoSignal, 'go', self.go_callback, 10)
             #Lifecycle publisher pode ser desativado e ativado
             self._publisher_ = self.create_lifecycle_publisher(Path, 'path', 10)
