@@ -35,8 +35,8 @@ class LowLevelControl(Node):
         self.pwm = 18
 
         self.ts  = 1/50
-        self.kp = 0.75
-        self.kd = 0.05*self.ts
+        self.kp = 75.0
+        self.kd = 5.0*self.ts
         self.bias = 20.0                #valor do bias
         self.max_signal.data = 60.0     #limite superior do saturador
         self.min_signal.data = -60.0    #limite inferior do saturador
@@ -63,7 +63,7 @@ class LowLevelControl(Node):
         try:
             message = self.can.can_listener.read_message()
             data = self.can.can_reader(message)        
-            self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
+            self.sensor.data = float(-((2*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 1))
             
             self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_setPoint, self.sensor.data)
 
