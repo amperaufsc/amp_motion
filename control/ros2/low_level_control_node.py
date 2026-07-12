@@ -14,7 +14,7 @@ from longitudinal_control.PD_controller import PDController
 class LowLevelControl(Node):
     def __init__(self):
         super().__init__('low_level_control')    
-        self.subscription = self.create_subscription(ControlCommand, '/control_command', self.control_callback, 10)
+        self.subscription = self.create_subscription(ControlCommand, '/control', self.control_callback, 10)
 
         self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
         self.pub_control_overshoot = self.create_publisher(Float32, 'control/actual_value', 10)
@@ -35,13 +35,13 @@ class LowLevelControl(Node):
         self.pwm = 18
 
         self.ts  = 1/50
-        self.kp = 0.26
+        self.kp = 0.75
         self.kd = 0.05*self.ts
-        self.bias = 12.0                #valor do bias
+        self.bias = 20.0                #valor do bias
         self.max_signal.data = 60.0     #limite superior do saturador
         self.min_signal.data = -60.0    #limite inferior do saturador
-        self.sensor_max = 18800.0       #max é na esquerda
-        self.sensor_min = 9000.0        #min é na direita
+        self.sensor_max = 203.0       #max é na esquerda
+        self.sensor_min = 145.0        #min é na direita
         #Quando o sinal de controle for positivo, as rodas esterçam para a esquerda do piloto
 
         self.control_setPoint = 0
@@ -62,7 +62,7 @@ class LowLevelControl(Node):
     def timer_callback(self):
         try:
             message = self.can.can_listener.read_message()
-            data = self.can.can_reader(message)/10        
+            data = self.can.can_reader(message)        
             self.sensor.data = float(((200*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 100))
             
             self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_setPoint, self.sensor.data)
@@ -74,10 +74,10 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-            if data > (self.sensor_max -300):
+            if data > (self.sensor_max -4):
                 limited_control = min(0.0, self.control.data)
                 self.signals.steer(limited_control)
-            elif data < (self.sensor_min +300):
+            elif data < (self.sensor_min +4):
                 limited_control = max(0.0, self.control.data)
                 self.signals.steer(limited_control)      
             else:
