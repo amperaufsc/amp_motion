@@ -15,6 +15,7 @@ class LowLevelControl(Node):
     def __init__(self):
         super().__init__('low_level_control')    
         self.subscription = self.create_subscription(ControlCommand, '/control', self.control_callback, 10)
+     
 
         self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
         self.pub_control_overshoot = self.create_publisher(Float32, 'control/actual_value', 10)
@@ -37,11 +38,11 @@ class LowLevelControl(Node):
         self.ts  = 1/50
         self.kp = 75.0
         self.kd = 5.0*self.ts
-        self.bias = 20.0                #valor do bias
+        self.bias = 10.0                #valor do bias
         self.max_signal.data = 60.0     #limite superior do saturador
         self.min_signal.data = -60.0    #limite inferior do saturador
-        self.sensor_max = 203.0       #max é na esquerda
-        self.sensor_min = 145.0        #min é na direita
+        self.sensor_max = 187.0       #max é na esquerda
+        self.sensor_min = 93.0        #min é na direita
         #Quando o sinal de controle for positivo, as rodas esterçam para a esquerda do piloto
 
         self.control_setPoint = 0
@@ -57,13 +58,13 @@ class LowLevelControl(Node):
 
 
     def control_callback(self, setPoint: ControlCommand):
-        self.control_setPoint = setPoint.steering
+        self.control_setPoint = -setPoint.steering
                 
     def timer_callback(self):
         try:
             message = self.can.can_listener.read_message()
             data = self.can.can_reader(message)        
-            self.sensor.data = float(-((2*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 1))
+            self.sensor.data = float(((2*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 1))
             
             self.control_overshoot.data, self.control.data, self.error.data = self.pd.update_signal(self.control_setPoint, self.sensor.data)
 
