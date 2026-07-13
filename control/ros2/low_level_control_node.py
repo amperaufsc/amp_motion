@@ -36,9 +36,9 @@ class LowLevelControl(Node):
         self.pwm = 18
 
         self.ts  = 1/50
-        self.kp = 75.0
-        self.kd = 5.0*self.ts
-        self.bias = 10.0                #valor do bias
+        self.kp = 50.0
+        self.kd = 0.0*self.ts
+        self.bias = 15.0                #valor do bias
         self.max_signal.data = 60.0     #limite superior do saturador
         self.min_signal.data = -60.0    #limite inferior do saturador
         self.sensor_max = 187.0       #max é na esquerda
