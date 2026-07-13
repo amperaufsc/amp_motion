@@ -4,7 +4,7 @@ import can
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from can_classes.can_reader import StateCanReader
 from rclpy.node import Node
-from fs_msgs.msg import ControlCommand
+from fs_msgs.msg import ControlCommand, GoSignal
 from std_msgs.msg import Float32
 from signals.signal_control import SignalsController
 from longitudinal_control.PIDT_controller import PIDController
@@ -15,7 +15,7 @@ class LowLevelControl(Node):
     def __init__(self):
         super().__init__('low_level_control')    
         self.subscription = self.create_subscription(ControlCommand, '/control', self.control_callback, 10)
-     
+        self.subscription = self.create_subscription(GoSignal, '/as_amp/mission_selected/go', self.go_callback, 10)     
 
         self.pub_sensor = self.create_publisher(Float32, 'sensor/value', 10)
         self.pub_control_overshoot = self.create_publisher(Float32, 'control/actual_value', 10)
@@ -56,12 +56,16 @@ class LowLevelControl(Node):
 
         self.timer = self.create_timer(1/50, self.timer_callback)
 
+        self.initialized = 0
+
 
     def control_callback(self, setPoint: ControlCommand):
         self.control_setPoint = -setPoint.steering
                 
     def timer_callback(self):
         try:
+            if self.initialized < 3:
+                return
             message = self.can.can_listener.read_message()
             data = self.can.can_reader(message)        
             self.sensor.data = float(((2*(data - self.sensor_min)/(self.sensor_max - self.sensor_min)) - 1))
@@ -92,6 +96,9 @@ class LowLevelControl(Node):
 Control: {self.control.data, self.control_overshoot.data, self.error.data}
 setPoint: {self.control_setPoint}\nSensor: {self.sensor.data}, {data}''')
         self.sensor = Float32()        
+
+    def go_callback(self, message):
+        self.initialized += 1
 
 def main(args=None):
     rclpy.init()
