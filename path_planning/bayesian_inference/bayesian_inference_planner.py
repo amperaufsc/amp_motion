@@ -303,9 +303,22 @@ class Bayesian_Inference_Planner:
 
         return self.global_path
 
+    def drop_zero_segments(self, path):
+        # Remove pontos CONSECUTIVOS duplicados do path: um segmento de
+        # comprimento zero repete o valor na distancia acumulada (cumsum),
+        # e o interp1d exige x estritamente sem duplicatas ->
+        # ValueError "Expect x to not have duplicates" (crash do no).
+        # Loops legitimos no path (ponto revisitado NAO consecutivo) passam.
+        path = np.asarray(path, dtype=float)
+        if len(path) < 2:
+            return path
+        seg = np.sqrt(np.sum(np.diff(path, axis=0)**2, axis=1))
+        keep = np.concatenate([[True], seg > 1e-9])
+        return path[keep]
+
     def get_interpolated_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
         #interpola os pontos do path normal e concatenado e retorna os dois
-        
+
         normal_path = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
         concatenated_path = self.continuous_path(obstacle_numpy_array, Vehicle_Pose)
 
@@ -314,7 +327,10 @@ class Bayesian_Inference_Planner:
 
         if len(concatenated_path) > self.limit_size:
             concatenated_path = concatenated_path[(-self.limit_size):]
-        
+
+        normal_path = self.drop_zero_segments(normal_path)
+        concatenated_path = self.drop_zero_segments(concatenated_path)
+
         distance_normalpath = np.cumsum( np.sqrt(np.sum( np.diff(normal_path, axis=0)**2, axis=1 )) )
         distance_normalpath = np.insert(distance_normalpath, 0, 0)/distance_normalpath[-1]
         interpolator_normalpath =  interp1d(distance_normalpath, normal_path, kind="slinear", axis=0)

@@ -13,6 +13,8 @@ AMP:                          # nome do namespace
 
       # Vehicle parameters
       speed: 1.0                # velocidade do veículo
+      throttle_max: 0.08        # anti-kick de largada (0.08 validado p/ cruzeiro
+                                #   ~2 m/s no EUFS; subir se speed aumentar)
 
       # Code parameters
       sampling_period: 0.01  # período de amostragem

@@ -39,6 +39,7 @@ class ControlNode(Node):
         self.declare_parameter('Keh', 0.0)
         self.declare_parameter('speed', 0.0)
         self.declare_parameter('sampling_period', 0.01)
+        self.declare_parameter('throttle_max', 1.0)
 
         self.Kp = self.get_parameter('Kp').value
         self.Ki = self.get_parameter('Ki').value
@@ -47,6 +48,7 @@ class ControlNode(Node):
         self.Keh = self.get_parameter('Keh').value
         self.speed = self.get_parameter('speed').value
         self.T = self.get_parameter('sampling_period').value
+        self.throttle_max = self.get_parameter('throttle_max').value
 
         self.timer = self.create_timer(float(self.T), self.timer_callback)
         self.index = 0
@@ -56,7 +58,7 @@ class ControlNode(Node):
 
         kls_lateral_motion_controller_gains = KLS_Lateral_Motion_Controller_Gains(self.Key, self.Keh) #lateral error gain - orientation error gain
         self.control = KLS_Lateral_Motion_Controller(vehicle_parameters, kls_lateral_motion_controller_gains)
-        self.longitudinal_controller = Longitudinal_Controller(self.Kp, self.Ki, self.Kd, self.T, self.speed)
+        self.longitudinal_controller = Longitudinal_Controller(self.Kp, self.Ki, self.Kd, self.T, self.speed, max_signal=self.throttle_max)
         #self.PID_Controller = PIDController(Kp, Ki, Kd, T)
         self.received_path= False
         self.received_odom = False
@@ -121,17 +123,28 @@ class ControlNode(Node):
 
             if self.received_path:
                 #Procurar apenas em uma janela (20) ao redor do último ponto conhecido.
-                start = max(0, self.closest_index - 20) # onde a janela se inicia, não pode ser menor que 0
-                end   = min(len(self.path), self.closest_index + 20) # onde a janela termina, não pode ser maior que o tamanho do path
-                segment = self.path[start:end] # pega apenas os pontos dentro dessa janela
+                # A pista e' um LOOP fechado: a janela e a referencia dao a
+                # volta no array (modulo N). Sem isso, no fechamento da volta
+                # reference_path encolhia ate 1 ponto -> IndexError no KLS e o
+                # no morria com o ultimo comando latched no sim.
+                n = len(self.path)
+                idxs = np.arange(self.closest_index - 20, self.closest_index + 20) % n
+                segment = self.path[idxs] # pega apenas os pontos dentro dessa janela
                 distancias = np.linalg.norm(segment - self.position, axis=1) # calcula as distancias em relação ao carro
 
-                self.closest_index = start + np.argmin(distancias) # o indice mais próximo dentro da janela e transforma em indice global
+                self.closest_index = int(idxs[np.argmin(distancias)]) # indice global do mais proximo
 
-                self.reference_path = self.path[self.closest_index:]
+                ref_idxs = np.arange(self.closest_index, self.closest_index + 60) % n
+                self.reference_path = self.path[ref_idxs] # 60 pts (~18 m) a frente, com wrap
 
-                steering_command = - self.control.update_steering_angle_control_signal(self.reference_path, self.vehicle_state)
+                # KLS consertado sai CCW-positivo (steering>0 = esquerda), mesma
+                # convencao do EUFS/carro real -> SEM negacao. (A negacao era
+                # necessaria so no FSDS, onde comando negativo = esquerda.)
+                steering_command = self.control.update_steering_angle_control_signal(self.reference_path, self.vehicle_state)
                 throttle_command, brake_command = self.longitudinal_controller.update_torque_control_signal(self.path, self.vehicle_state)
+                # anti-kick de largada: na partida o erro de velocidade e'
+                # maximo e o PID pede throttle alto de uma vez (o carro rabeia)
+                throttle_command = min(throttle_command, self.throttle_max)
 
                 self.get_logger().debug('Throttle: "%f"' %throttle_command)
                 self.get_logger().debug('Steering: "%f"' %steering_command)

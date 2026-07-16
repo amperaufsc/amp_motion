@@ -172,7 +172,10 @@ class PathNode(Node):
         else:
             self.get_logger().info('Track not Received')
                 
-        if self.go_msg.mission == "trackdrive" and self.track_received:
+        # odom_received e' obrigatorio: sem ele car_pose ainda e' a lista
+        # vazia do __init__ e o planner crasha no vstack (corrida na largada
+        # quando GO chega antes do 1o odom pos-track)
+        if self.go_msg.mission == "trackdrive" and self.track_received and self.odom_received:
             self.get_logger().info('oi')
 
             self.local_cones = []

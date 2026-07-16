@@ -17,11 +17,15 @@ class PIDController:
         D = self.kd*((erro-self.erro_ant)/self.T)
         sinal_controle = P + I + D
         self.erro_ant = erro
+
+        sinal_saturado = sinal_controle
+        if sinal_saturado > self.max_signal:
+            sinal_saturado = self.max_signal
+        if sinal_saturado < self.min_signal:
+            sinal_saturado = self.min_signal
+
+        # anti-windup (back-calculation): a saida e' saturada mas o integrador
+        I += sinal_saturado - sinal_controle
         self.I_ant = I
 
-        if sinal_controle > self.max_signal:
-            sinal_controle = self.max_signal
-        if sinal_controle < self.min_signal:
-            sinal_controle = self.min_signal
-        
-        return sinal_controle 
+        return sinal_saturado

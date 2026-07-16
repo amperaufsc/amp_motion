@@ -1,5 +1,9 @@
 import numpy as np
 
+#by Hessmann
+#gabriel.hessmann.r@gmail.com
+#git GabrielH2003
+
 from include.vehicle_parameters import Vehicle_Parameters
 from include.kls_lateral_motion_controller_gains import KLS_Lateral_Motion_Controller_Gains
 
@@ -27,18 +31,28 @@ class KLS_Lateral_Motion_Controller:
         return np.arctan2(np.sin(reference_orientation - yaw), np.cos(reference_orientation - yaw))   
     
     def get_krp(self, reference_trajectory, vehicle_state):
-        points = reference_trajectory[:self.look_ahead_horizon]
-        x = points[:,0]
-        y = points[:,1]
-        a,b,c = np.polyfit(x,y,2)
-        x_rp = reference_trajectory[0][0] - vehicle_state.x_position
-
-        krp = 2*a/(1+(2*a*x_rp+b)**2)**(3/2)
-        return krp
+        # curvatura ASSINADA por 3 pontos (Menger): independente de frame.
+        n = min(self.look_ahead_horizon, len(reference_trajectory))
+        if n < 3:
+            return 0.0            # fim do path: sem pontos p/ curvatura
+        p1, p2, p3 = (np.asarray(reference_trajectory[0], float),
+                      np.asarray(reference_trajectory[n // 2], float),
+                      np.asarray(reference_trajectory[n - 1], float))
+        a = p2 - p1
+        b = p3 - p1
+        cross = a[0] * b[1] - a[1] * b[0]
+        d12 = np.linalg.norm(a); d13 = np.linalg.norm(b)
+        d23 = np.linalg.norm(p3 - p2)
+        denom = d12 * d13 * d23
+        if denom < 1e-9:
+            return 0.0
+        krp = 2.0 * cross / denom          
+        return float(np.clip(krp, -0.5, 0.5))   
+                                                
 
     def update_steering_angle_control_signal(self, reference_trajectory, measured_state):
         car_position = [measured_state.x_position, measured_state.y_position]
-        reference_point_orientation = reference_trajectory[1]-reference_trajectory[0] #(x1,y1) - (x0,y0) = (xr,yr)
+        reference_point_orientation = reference_trajectory[1]-reference_trajectory[0] 
         reference_point_orientation = reference_point_orientation/np.linalg.norm(reference_point_orientation)
 
         krp = self.get_krp(np.array(reference_trajectory), measured_state)
@@ -50,7 +64,12 @@ class KLS_Lateral_Motion_Controller:
         vx = np.linalg.norm([measured_state.x_velocity, measured_state.y_velocity])
         steering_angle = 0
         if vx >= 0.8:
-            steering_angle = np.arctan(L*(-Kh*np.sin(eh) - Kh*Ky*ey/vx + krp*np.cos(eh)/(1-krp*ey)))
+            # FIX de sinal: eh = ref - yaw, entao yaw a DIREITA da tangente da
+            # eh>0 e o carro precisa esterca ESQUERDA (+Kh*sin(eh)). O -Kh
+            # original desestabilizava o heading enquanto o termo de ey
+            # estabilizava (paridades opostas -> ciclo-limite inevitavel).
+            # Convencao final: steering_angle > 0 = esquerda (CCW).
+            steering_angle = np.arctan(L*(Kh*np.sin(eh) - Kh*Ky*ey/vx + krp*np.cos(eh)/(1-krp*ey)))
 
         if steering_angle < self.steering_down_limit:
             steering_angle = self.steering_down_limit
