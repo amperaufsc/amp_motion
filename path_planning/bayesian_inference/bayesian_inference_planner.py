@@ -278,52 +278,58 @@ class Bayesian_Inference_Planner:
     def continuous_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
         Car_Position = np.array([Vehicle_Pose.x_position_track_reference_frame, Vehicle_Pose.y_position_track_reference_frame])
         new_path = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
-        new_path = new_path[1:] 
+        new_path = new_path[1:]
 
         if len(self.global_path) < 2:
             for point in new_path:
-                self.global_path = np.append(self.global_path, [point], axis=0)
+                if np.linalg.norm(point - self.global_path[-1]) > 1e-6:
+                    self.global_path = np.append(self.global_path, [point], axis=0)
             return self.global_path
 
-        point_last = self.global_path[-1]      # Último ponto
-        point_second_last = self.global_path[-2]  # Penúltimo ponto
+        point_last = self.global_path[-1]
+        point_second_last = self.global_path[-2]
         current_angle = np.arctan2(point_last[1] - point_second_last[1], point_last[0] - point_second_last[0])
 
-        for i, point in enumerate(new_path):
+        for point in new_path:
+            if np.linalg.norm(point - point_last) < 1e-6:
+                continue  # ponto praticamente igual ao último, ignora
+
             candidate_angle = np.arctan2(point[1] - point_last[1], point[0] - point_last[0])
             angle_diff = abs(candidate_angle - current_angle)
-
             if angle_diff > np.pi:
                 angle_diff = 2 * np.pi - angle_diff
 
             if angle_diff < np.deg2rad(20):
                 self.global_path = np.append(self.global_path, [point], axis=0)
+                point_last = point  # atualiza referência (corrige também o bug do ângulo desatualizado)
             else:
-                break 
+                break
 
         return self.global_path
 
+    def _dedupe_path(self, path):
+        diffs = np.linalg.norm(np.diff(path, axis=0), axis=1)
+        keep = np.insert(diffs > 1e-9, 0, True)  # sempre mantém o primeiro ponto
+        return path[keep]
+
     def get_interpolated_path(self, obstacle_numpy_array, Vehicle_Pose: Vehicle_Pose):
-        #interpola os pontos do path normal e concatenado e retorna os dois
-        
         normal_path = self.plan_path(obstacle_numpy_array, Vehicle_Pose)
         concatenated_path = self.continuous_path(obstacle_numpy_array, Vehicle_Pose)
 
         if len(normal_path) > self.limit_size:
             normal_path = normal_path[(-self.limit_size):]
-
         if len(concatenated_path) > self.limit_size:
             concatenated_path = concatenated_path[(-self.limit_size):]
-        
-        distance_normalpath = np.cumsum( np.sqrt(np.sum( np.diff(normal_path, axis=0)**2, axis=1 )) )
-        distance_normalpath = np.insert(distance_normalpath, 0, 0)/distance_normalpath[-1]
-        interpolator_normalpath =  interp1d(distance_normalpath, normal_path, kind="slinear", axis=0)
 
-        distance_concatpath = np.cumsum( np.sqrt(np.sum( np.diff(concatenated_path, axis=0)**2, axis=1 )) )
+        normal_path = self._dedupe_path(normal_path)
+        concatenated_path = self._dedupe_path(concatenated_path)
+
+        distance_normalpath = np.cumsum(np.sqrt(np.sum(np.diff(normal_path, axis=0)**2, axis=1)))
+        distance_normalpath = np.insert(distance_normalpath, 0, 0)/distance_normalpath[-1]
+        interpolator_normalpath = interp1d(distance_normalpath, normal_path, kind="slinear", axis=0)
+
+        distance_concatpath = np.cumsum(np.sqrt(np.sum(np.diff(concatenated_path, axis=0)**2, axis=1)))
         distance_concatpath = np.insert(distance_concatpath, 0, 0)/distance_concatpath[-1]
-        interpolator_concatpath =  interp1d(distance_concatpath, concatenated_path, kind="slinear", axis=0)
+        interpolator_concatpath = interp1d(distance_concatpath, concatenated_path, kind="slinear", axis=0)
 
         return interpolator_normalpath(np.linspace(0,1,100)), interpolator_concatpath(np.linspace(0,1,100))
-    
-'''<3 Diva <3
-    oiiii yasmin'''
