@@ -64,7 +64,7 @@ class ControlNode(LifecycleNode):
         self.declare_parameter('Kp', 0.05)
         self.declare_parameter('Ki', 0.01)
         self.declare_parameter('Kd', 0.0)
-        self.declare_parameter('Key', 2.0)
+        self.declare_parameter('Key', 1.7)
         self.declare_parameter('Keh', 1.5)
         self.declare_parameter('speed', 1.0)
         self.declare_parameter('sampling_period', 0.01)
