@@ -36,13 +36,13 @@ class LowLevelControl(Node):
         self.pwm = 18
 
         self.ts  = 1/50
-        self.kp = 75.0
-        self.kd = 5.0*self.ts
-        self.bias = 10.0                #valor do bias
-        self.max_signal.data = 60.0     #limite superior do saturador
-        self.min_signal.data = -60.0    #limite inferior do saturador
-        self.sensor_max = 187.0       #max é na esquerda
-        self.sensor_min = 93.0        #min é na direita
+        self.kp = 85.0
+        self.kd = 0.0*self.ts
+        self.bias = 20.0                #valor do bias
+        self.max_signal.data = 90.0     #limite superior do saturador
+        self.min_signal.data = -90.0    #limite inferior do saturador
+        self.sensor_max = 215.0       #max é na esquerda
+        self.sensor_min = 65.0        #min é na direita
         #Quando o sinal de controle for positivo, as rodas esterçam para a esquerda do piloto
 
         self.control_setPoint = 0
@@ -75,14 +75,15 @@ class LowLevelControl(Node):
             self.pub_max.publish(self.max_signal)
             self.pub_control_error.publish(self.error)
                 
-            if data > (self.sensor_max -4):
-                limited_control = min(0.0, self.control.data)
-                self.signals.steer(limited_control)
-            elif data < (self.sensor_min +4):
-                limited_control = max(0.0, self.control.data)
-                self.signals.steer(limited_control)      
-            else:
-                self.signals.steer(self.control.data)           
+            #if data > (self.sensor_max -4):
+            #    limited_control = min(0.0, self.control.data)
+            #    self.signals.steer(limited_control)
+            #elif data < (self.sensor_min +4):
+            #    limited_control = max(0.0, self.control.data)
+            #    self.signals.steer(limited_control)      
+            #else:
+            #    self.signals.steer(self.control.data)   
+            self.signals.steer(-20)        
         except Exception as e:
             self.get_logger().info(f"{e}")
             if message == None:
