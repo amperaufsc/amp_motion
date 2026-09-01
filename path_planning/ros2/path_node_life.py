@@ -403,7 +403,7 @@ class PathNode(LifecycleNode):
                 self.path_publishing(np_array_path)
 
         except Exception as e:
-            self.get_logger().error(f"Cleaning failed: {e}")
+            self.get_logger().error(f"Callback failed: {e}")
             #return TransitionCallbackReturn.FAILURE
             return TransitionCallbackReturn.ERROR
 
